@@ -1,0 +1,472 @@
+{% extends 'base.html' %}
+
+{% block title %}Chikitsa360: Healthcare! Everywhere!{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="c360-hero relative overflow-hidden">
+    <div class="c360-hero-shape"></div>
+    <div class="c360-hero-shape" style="top: -5%; right: auto; left: -10%; width: 400px; height: 400px; opacity: 0.05;"></div>
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-20 lg:py-24 relative z-10 c360-hero-content">
+        <div class="md:flex md:items-center md:space-x-12">
+            <div class="md:w-1/2 animate-on-scroll opacity-0" data-animation="slide-up">
+                <h1 class="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white tracking-tight leading-tight">
+                    Healthcare<br class="hidden md:block"> Everywhere.<br class="hidden md:block"> Anytime.
+                </h1>
+                <p class="mt-6 text-xl text-blue-100 max-w-lg">
+                    Connect with specialized healthcare providers through secure video consultations from the comfort of your home.
+                </p>
+                <div class="mt-10 flex flex-col sm:flex-row sm:space-x-6 space-y-4 sm:space-y-0">
+                    <a href="{% url 'doctor_search' %}" class="c360-btn-primary inline-flex items-center justify-center px-6 py-3 text-base font-medium">
+                        <i class="fas fa-search mr-2"></i> Find a Doctor
+                    </a>
+                    {% if not user.is_authenticated %}
+                    <a href="{% url 'register' %}" class="c360-btn-secondary inline-flex items-center justify-center px-6 py-3 text-base font-medium">
+                        <i class="fas fa-user-plus mr-2"></i> Sign Up Now
+                    </a>
+                    {% endif %}
+                </div>
+                
+                <!-- Feature badges -->
+                <div class="mt-10 grid grid-cols-2 gap-4 max-w-lg">
+                    <div class="bg-white bg-opacity-10 rounded-lg p-3 flex items-center">
+                        <i class="fas fa-video text-white mr-3 text-xl"></i>
+                        <span class="text-white font-medium">HD Video Calls</span>
+                    </div>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-3 flex items-center">
+                        <i class="fas fa-lock text-white mr-3 text-xl"></i>
+                        <span class="text-white font-medium">Secure & Private</span>
+                    </div>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-3 flex items-center">
+                        <i class="fas fa-file-medical text-white mr-3 text-xl"></i>
+                        <span class="text-white font-medium">Digital Prescriptions</span>
+                    </div>
+                    <div class="bg-white bg-opacity-10 rounded-lg p-3 flex items-center">
+                        <i class="fas fa-comment-medical text-white mr-3 text-xl"></i>
+                        <span class="text-white font-medium">Chat Support</span>
+                    </div>
+                </div>
+            </div>
+            <div class="hidden md:block md:w-1/2 mt-10 md:mt-0 animate-on-scroll opacity-0" data-animation="slide-in-right">
+                <div class="relative">
+                    <div class="absolute -top-4 -right-4 bottom-4 -left-4 bg-gradient-to-r from-accent-orange to-accent-peach opacity-60 rounded-2xl transform rotate-3"></div>
+                    <img class="w-full rounded-xl shadow-2xl relative" src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2070&q=80" alt="Doctor consultation">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search Section -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
+    <div class="c360-card p-6 md:p-8 animate-on-scroll opacity-0" data-animation="slide-up">
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Find Your Doctor</h2>
+        <p class="text-gray-600 mb-6">Search by name, specialty, or available date to connect with the right healthcare professional</p>
+        <form method="get" action="{% url 'doctor_search' %}" id="doctor-search-form">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                    <label for="query" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-user-md text-primary-teal mr-2"></i>Doctor Name or Specialty
+                    </label>
+                    <input type="text" name="query" id="query" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-teal focus:border-primary-teal transition-colors" placeholder="e.g., Dr. Smith or Cardiology">
+                </div>
+                <div>
+                    <label for="specialty" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-stethoscope text-primary-teal mr-2"></i>Specialty
+                    </label>
+                    <input type="text" name="specialty" id="specialty" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-teal focus:border-primary-teal transition-colors" placeholder="e.g., Pediatrics">
+                </div>
+                <div>
+                    <label for="date" class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-alt text-primary-teal mr-2"></i>Available Date
+                    </label>
+                    <input type="date" name="date" id="date" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-primary-teal focus:border-primary-teal transition-colors">
+                </div>
+            </div>
+            <div class="mt-8 flex justify-center">
+                <button type="submit" class="c360-btn-primary px-8 py-3 text-base inline-flex items-center">
+                    <i class="fas fa-search mr-2"></i>
+                    Search Doctors
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Featured Doctors -->
+{% if featured_doctors %}
+<div class="bg-gray-50 py-8 md:py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-2xl font-bold text-gray-800 mb-8 text-center">Our Featured Specialists</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for doctor in featured_doctors %}
+            <div class="doctor-card overflow-hidden transition-all hover:shadow-xl">
+                <div class="p-6">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center">
+                            <svg class="h-10 w-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-lg font-medium text-gray-900">Dr. {{ doctor.user.get_full_name }}</h3>
+                            <p class="text-sm text-gray-500">{{ doctor.profile.specialty }}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-sm text-gray-600">{{ doctor.profile.experience_years }} years of experience</p>
+                        <p class="text-sm text-gray-600 mt-1">{{ doctor.profile.hospital_affiliation|default:"" }}</p>
+                        <div class="mt-2 flex items-center">
+                            <span class="text-blue-600 font-medium">₹{{ doctor.profile.consultation_fee }}</span>
+                            <span class="text-gray-500 text-sm ml-1">per consultation</span>
+                        </div>
+                    </div>
+                    <div class="mt-5">
+                        <a href="{% url 'doctor_detail' doctor.user.id %}" class="block w-full px-4 py-2 bg-blue-600 text-white text-center rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            View Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="text-center mt-8">
+            <a href="{% url 'doctor_search' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-base font-medium rounded-md text-blue-700 bg-blue-100 hover:bg-blue-200">
+                View All Doctors
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ml-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+                </svg>
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- How It Works Section -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-20">
+    <div class="text-center mb-10 animate-on-scroll opacity-0" data-animation="fade-in">
+        <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">How Chikitsa360 Works</h2>
+        <p class="text-gray-600 max-w-2xl mx-auto">Our simple three-step process makes healthcare accessible to everyone, everywhere</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
+        <!-- Connecting line (hidden on mobile) -->
+        <div class="hidden md:block absolute top-24 left-0 right-0 h-0.5 bg-gradient-to-r from-primary-teal to-primary-light z-0"></div>
+        
+        <!-- Step 1 -->
+        <div class="c360-card p-6 pt-12 text-center relative z-10 animate-on-scroll opacity-0" data-animation="slide-up">
+            <div class="c360-service-icon mx-auto mb-6">
+                <i class="fas fa-search text-3xl"></i>
+            </div>
+            <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-primary-teal text-white rounded-full w-10 h-10 flex items-center justify-center font-bold">1</div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-3">Find a Doctor</h3>
+            <p class="text-gray-600">Search our directory of specialists by name, specialty, or available dates, and view their detailed profiles and ratings.</p>
+            <a href="{% url 'doctor_search' %}" class="inline-block mt-4 text-primary-teal hover:text-primary-dark font-medium">
+                <span>Find a doctor</span>
+                <i class="fas fa-arrow-right ml-1 text-sm"></i>
+            </a>
+        </div>
+        
+        <!-- Step 2 -->
+        <div class="c360-card p-6 pt-12 text-center relative z-10 animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: 0.2s;">
+            <div class="c360-service-icon mx-auto mb-6">
+                <i class="fas fa-calendar-check text-3xl"></i>
+            </div>
+            <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-primary-teal text-white rounded-full w-10 h-10 flex items-center justify-center font-bold">2</div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-3">Book an Appointment</h3>
+            <p class="text-gray-600">Schedule a convenient time slot, make a secure payment through our platform, and receive instant confirmation.</p>
+            {% if user.is_authenticated %}
+                <a href="{% url 'patient_appointments' %}" class="inline-block mt-4 text-primary-teal hover:text-primary-dark font-medium">
+                    <span>My appointments</span>
+                    <i class="fas fa-arrow-right ml-1 text-sm"></i>
+                </a>
+            {% else %}
+                <a href="{% url 'register' %}" class="inline-block mt-4 text-primary-teal hover:text-primary-dark font-medium">
+                    <span>Sign up to book</span>
+                    <i class="fas fa-arrow-right ml-1 text-sm"></i>
+                </a>
+            {% endif %}
+        </div>
+        
+        <!-- Step 3 -->
+        <div class="c360-card p-6 pt-12 text-center relative z-10 animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: 0.4s;">
+            <div class="c360-service-icon mx-auto mb-6">
+                <i class="fas fa-video text-3xl"></i>
+            </div>
+            <div class="absolute -top-5 left-1/2 transform -translate-x-1/2 bg-primary-teal text-white rounded-full w-10 h-10 flex items-center justify-center font-bold">3</div>
+            <h3 class="text-xl font-semibold text-gray-800 mb-3">Attend Your Consultation</h3>
+            <p class="text-gray-600">Join a secure video call, discuss your health concerns, and receive a digital prescription and consultation transcript.</p>
+            <a href="#how-video-works" class="inline-block mt-4 text-primary-teal hover:text-primary-dark font-medium">
+                <span>How video works</span>
+                <i class="fas fa-arrow-right ml-1 text-sm"></i>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Services Section -->
+<div class="bg-gradient-to-b from-white to-gray-50 py-16 md:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10 animate-on-scroll opacity-0" data-animation="fade-in">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">Our Services</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">Comprehensive telehealth services for all your healthcare needs</p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {% if services %}
+                {% for service in services %}
+                <div class="c360-card p-6 animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: {{ forloop.counter|divisibleby:4 }}00ms;">
+                    <div class="c360-service-icon">
+                        <i class="{{ service.icon_class }} text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">{{ service.name }}</h3>
+                    <p class="text-gray-600">{{ service.description }}</p>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Fallback services if no dynamic content is available -->
+                <div class="c360-card p-6 animate-on-scroll opacity-0" data-animation="slide-up">
+                    <div class="c360-service-icon">
+                        <i class="fas fa-stethoscope text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">General Consultation</h3>
+                    <p class="text-gray-600">Consult with general physicians for common health concerns and medical advice.</p>
+                </div>
+                <div class="c360-card p-6 animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: 100ms;">
+                    <div class="c360-service-icon">
+                        <i class="fas fa-user-md text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Specialist Consultations</h3>
+                    <p class="text-gray-600">Connect with specialists in cardiology, dermatology, pediatrics, and more.</p>
+                </div>
+                <div class="c360-card p-6 animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: 200ms;">
+                    <div class="c360-service-icon">
+                        <i class="fas fa-brain text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Mental Health Support</h3>
+                    <p class="text-gray-600">Access professional psychiatrists and psychologists for mental wellbeing.</p>
+                </div>
+                <div class="c360-card p-6 animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: 300ms;">
+                    <div class="c360-service-icon">
+                        <i class="fas fa-clipboard-check text-3xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-2">Follow-up Consultations</h3>
+                    <p class="text-gray-600">Convenient follow-up appointments with your healthcare provider.</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Feature Call-to-Action -->
+        <div class="mt-12 text-center animate-on-scroll opacity-0" data-animation="fade-in">
+            <a href="{% url 'doctor_search' %}" class="c360-btn-primary px-8 py-3 text-base inline-flex items-center">
+                <i class="fas fa-hand-holding-medical mr-2"></i>
+                Explore All Services
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Testimonials Section -->
+<div class="bg-gradient-to-b from-teal-50 to-white py-16 md:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8 animate-on-scroll opacity-0" data-animation="fade-in">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">What Our Users Say</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">Experiences from patients and healthcare providers</p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {% if testimonials %}
+                {% for testimonial in testimonials %}
+                <div class="c360-testimonial animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: {{ forloop.counter|divisibleby:3 }}00ms;">
+                    {% if testimonial.image %}
+                    <div class="c360-testimonial-image">
+                        <img src="{{ testimonial.image }}" alt="{{ testimonial.name }}" class="w-full h-full rounded-full object-cover">
+                    </div>
+                    {% else %}
+                    <div class="c360-testimonial-image flex items-center justify-center">
+                        <span class="text-primary-teal font-semibold text-xl">{{ testimonial.display_name|slice:":1"|upper }}</span>
+                    </div>
+                    {% endif %}
+                    <p class="c360-testimonial-text">"{{ testimonial.content }}"</p>
+                    <div class="text-center">
+                        <h4 class="c360-testimonial-name">{{ testimonial.display_name }}</h4>
+                        <p class="c360-testimonial-role">{% if testimonial.user.role == 'DOCTOR' %}{{ testimonial.doctor_profile.specialty }}{% else %}Patient{% endif %}</p>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="c360-testimonial animate-on-scroll opacity-0" data-animation="slide-up">
+                <div class="c360-testimonial-image flex items-center justify-center">
+                    <span class="text-primary-teal font-semibold text-xl">S</span>
+                </div>
+                <p class="c360-testimonial-text">"The platform made it so easy to consult with a specialist without leaving my home. The video quality was excellent and the doctor was very helpful."</p>
+                <div class="text-center">
+                    <h4 class="c360-testimonial-name">Sarah Johnson</h4>
+                    <p class="c360-testimonial-role">Patient</p>
+                </div>
+            </div>
+            
+            <div class="c360-testimonial animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: 100ms;">
+                <div class="c360-testimonial-image flex items-center justify-center">
+                    <span class="text-primary-teal font-semibold text-xl">M</span>
+                </div>
+                <p class="c360-testimonial-text">"As a healthcare provider, this platform has allowed me to reach more patients and provide care more efficiently. The technology is reliable and secure."</p>
+                <div class="text-center">
+                    <h4 class="c360-testimonial-name">Dr. Michael Chen</h4>
+                    <p class="c360-testimonial-role">Cardiologist</p>
+                </div>
+            </div>
+            
+            <div class="c360-testimonial animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: 200ms;">
+                <div class="c360-testimonial-image flex items-center justify-center">
+                    <span class="text-primary-teal font-semibold text-xl">D</span>
+                </div>
+                <p class="c360-testimonial-text">"I needed to consult with a doctor urgently while traveling and the platform connected me with a specialist within minutes. Excellent service!"</p>
+                <div class="text-center">
+                    <h4 class="c360-testimonial-name">David Williams</h4>
+                    <p class="c360-testimonial-role">Patient</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Testimonials Call-to-Action -->
+        <div class="mt-12 text-center animate-on-scroll opacity-0" data-animation="fade-in">
+            <a href="#" class="c360-btn-outline px-8 py-3 text-base inline-flex items-center">
+                <i class="fas fa-quote-right mr-2"></i>
+                View All Testimonials
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Health Tips Section -->
+<div class="bg-gradient-to-b from-white to-teal-50 py-16 md:py-20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-10 animate-on-scroll opacity-0" data-animation="fade-in">
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-800 mb-3">Health Tips & Insights</h2>
+            <p class="text-gray-600 max-w-2xl mx-auto">Expert health advice and medical insights from our team of healthcare professionals</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {% if health_tips %}
+                {% for tip in health_tips %}
+                <div class="c360-card overflow-hidden animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: {{ forloop.counter|divisibleby:3 }}00ms;">
+                    {% if tip.image_url %}
+                    <div class="h-48 overflow-hidden">
+                        <img src="{{ tip.image_url }}" alt="{{ tip.title }}" class="w-full h-full object-cover">
+                    </div>
+                    {% else %}
+                    <div class="h-48 bg-gradient-to-r from-primary-light to-primary-teal flex items-center justify-center">
+                        <i class="fas fa-heartbeat h-16 w-16 text-white text-4xl"></i>
+                    </div>
+                    {% endif %}
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-gray-500">{{ tip.created_at|date:"F d, Y" }}</span>
+                            {% if tip.is_featured %}
+                            <span class="c360-badge c360-badge-featured">Featured</span>
+                            {% endif %}
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-2">{{ tip.title }}</h3>
+                        <p class="text-gray-600 mb-4">{{ tip.content|truncatechars:120 }}</p>
+                        <div class="flex items-center mt-4">
+                            <div class="flex-shrink-0 h-10 w-10 bg-primary-light rounded-full flex items-center justify-center border-2 border-primary-teal">
+                                <span class="text-primary-teal font-semibold">{{ tip.author.get_full_name|default:"Dr"|slice:":1" }}</span>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-900">{{ tip.author.get_full_name|default:"Chikitsa360 Team" }}</p>
+                            </div>
+                        </div>
+                        <a href="#" class="block mt-4 text-primary-teal hover:text-primary-dark text-sm font-medium transition-colors">
+                            Read more <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <!-- Fallback health tips if no dynamic content is available -->
+                <div class="c360-card overflow-hidden animate-on-scroll opacity-0" data-animation="slide-up">
+                    <div class="h-48 bg-gradient-to-r from-primary-light to-primary-teal flex items-center justify-center">
+                        <i class="fas fa-tint h-16 w-16 text-white text-4xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-gray-500">May 5, 2025</span>
+                            <span class="c360-badge c360-badge-featured">Featured</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-2">Staying Hydrated: Why Water Matters</h3>
+                        <p class="text-gray-600 mb-4">Drinking adequate water is essential for maintaining good health. It helps regulate body temperature, keeps joints lubricated, prevents infections, and more...</p>
+                        <div class="flex items-center mt-4">
+                            <div class="flex-shrink-0 h-10 w-10 bg-primary-light rounded-full flex items-center justify-center border-2 border-primary-teal">
+                                <span class="text-primary-teal font-semibold">A</span>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-900">Dr. Amrita Singh</p>
+                            </div>
+                        </div>
+                        <a href="#" class="block mt-4 text-primary-teal hover:text-primary-dark text-sm font-medium transition-colors">
+                            Read more <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="c360-card overflow-hidden animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: 100ms;">
+                    <div class="h-48 bg-gradient-to-r from-primary-light to-primary-teal flex items-center justify-center">
+                        <i class="fas fa-brain h-16 w-16 text-white text-4xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-gray-500">April 28, 2025</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-2">Managing Stress in Daily Life</h3>
+                        <p class="text-gray-600 mb-4">Chronic stress can affect your physical and mental health. Discover effective techniques for managing stress, including meditation, deep breathing, and time management...</p>
+                        <div class="flex items-center mt-4">
+                            <div class="flex-shrink-0 h-10 w-10 bg-primary-light rounded-full flex items-center justify-center border-2 border-primary-teal">
+                                <span class="text-primary-teal font-semibold">R</span>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-900">Dr. Rahul Verma</p>
+                            </div>
+                        </div>
+                        <a href="#" class="block mt-4 text-primary-teal hover:text-primary-dark text-sm font-medium transition-colors">
+                            Read more <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="c360-card overflow-hidden animate-on-scroll opacity-0" data-animation="slide-up" style="animation-delay: 200ms;">
+                    <div class="h-48 bg-gradient-to-r from-primary-light to-primary-teal flex items-center justify-center">
+                        <i class="fas fa-running h-16 w-16 text-white text-4xl"></i>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs text-gray-500">April 15, 2025</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-800 mb-2">The Importance of Regular Exercise</h3>
+                        <p class="text-gray-600 mb-4">Regular physical activity improves cardiovascular health, strengthens muscles, boosts mental health, and helps maintain a healthy weight. Learn how to incorporate exercise into your daily routine...</p>
+                        <div class="flex items-center mt-4">
+                            <div class="flex-shrink-0 h-10 w-10 bg-primary-light rounded-full flex items-center justify-center border-2 border-primary-teal">
+                                <span class="text-primary-teal font-semibold">S</span>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm font-medium text-gray-900">Dr. Sanjay Mehta</p>
+                            </div>
+                        </div>
+                        <a href="#" class="block mt-4 text-primary-teal hover:text-primary-dark text-sm font-medium transition-colors">
+                            Read more <i class="fas fa-arrow-right ml-1"></i>
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+        
+        <!-- Health Tips Call-to-Action -->
+        <div class="mt-12 text-center animate-on-scroll opacity-0" data-animation="fade-in">
+            <a href="#" class="c360-btn-primary px-8 py-3 text-base inline-flex items-center">
+                <i class="fas fa-notes-medical mr-2"></i>
+                View All Health Tips
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+
+{% block title %}Video Consultation - Chikitsa360{% endblock %}
+
+{% block extra_css %}
+<style>
+    body {
+        overflow: hidden;
+    }
+    .video-container {
+        height: calc(100vh - 140px);
+    }
+    .chat-container {
+        height: calc(100vh - 140px);
+    }
+    .patient-info {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="bg-gray-800 py-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center text-white">
+                <h1 class="text-xl font-bold">Video Consultation</h1>
+                <span class="ml-4 px-3 py-1 bg-green-600 rounded-full text-sm" id="call-status">Connecting...</span>
+                <span class="ml-4 font-mono" id="call-duration">00:00:00</span>
+            </div>
+            <div>
+                <span class="text-red-400 hidden" id="error-display"></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Hidden input fields for JS -->
+    <input type="hidden" id="room-name" value="{{ room_name }}">
+    <input type="hidden" id="room-token" value="{{ token }}">
+    <input type="hidden" id="appointment-id" value="{{ appointment.id }}">
+    
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <!-- Main Video Area -->
+        <div class="lg:col-span-3">
+            <div class="bg-black rounded-lg overflow-hidden video-container relative" id="video-container">
+                <div class="absolute inset-0 flex items-center justify-center text-white">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-white mx-auto"></div>
+                        <p class="mt-4">Connecting to secure video session...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Call Controls -->
+            <div class="mt-4 flex justify-center space-x-4" id="call-controls">
+                <button id="mute-audio-btn" class="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" clip-rule="evenodd"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"></path>
+                    </svg>
+                    Mute
+                </button>
+                <button id="mute-video-btn" class="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path>
+                    </svg>
+                    Disable Video
+                </button>
+                <button id="transcribe-btn" class="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" data-auto-transcribe="false">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path>
+                    </svg>
+                    Transcribe Call
+                </button>
+                <button id="end-call-btn" class="flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2">
+                    <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 8l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M5 3a2 2 0 00-2 2v1c0 8.284 6.716 15 15 15h1a2 2 0 002-2v-3.28a1 1 0 00-.684-.948l-4.493-1.498a1 1 0 00-1.21.502l-1.13 2.257a11.042 11.042 0 01-5.516-5.517l2.257-1.128a1 1 0 00.502-1.21L9.228 3.683A1 1 0 008.279 3H5z"></path>
+                    </svg>
+                    End Call
+                </button>
+            </div>
+            
+            <div id="loading-indicator" class="hidden mt-4 p-4 bg-blue-50 border border-blue-200 rounded-md flex items-center justify-center">
+                <div class="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600 mr-3"></div>
+                <span class="text-blue-700">Generating transcription... This may take a few minutes.</span>
+            </div>
+        </div>
+        
+        <!-- Right Sidebar: Patient Info & Chat -->
+        <div class="lg:col-span-1">
+            {% if is_doctor %}
+            <!-- Patient Information (Only visible to doctors) -->
+            <div class="bg-white rounded-lg shadow-md mb-4 p-4" id="patient-info-panel">
+                <h2 class="text-lg font-medium text-gray-800 mb-2">Patient Information</h2>
+                <div class="patient-info text-sm">
+                    <div class="mb-3">
+                        <p class="font-medium text-gray-800">{{ patient_name }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <h3 class="text-sm font-medium text-gray-600">Reason for Visit:</h3>
+                        <p class="text-gray-800 mt-1">{{ reason }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Chat Panel -->
+            <div class="bg-white rounded-lg shadow-md h-full flex flex-col">
+                <div class="border-b border-gray-200 px-4 py-3">
+                    <h2 class="text-lg font-medium text-gray-800">In-Call Chat</h2>
+                </div>
+                <div class="flex-grow p-4 overflow-y-auto" id="chat-messages">
+                    <div class="text-center text-gray-500 text-sm">
+                        <p>Chat messages will appear here during the call.</p>
+                    </div>
+                </div>
+                <div class="border-t border-gray-200 p-4">
+                    <form id="chat-form" class="flex">
+                        <input type="text" id="chat-input" class="flex-grow px-3 py-2 border rounded-l-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Type a message...">
+                        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-r-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                            </svg>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% csrf_token %}
+
+{% endblock %}
+
+{% block extra_js %}
+<!-- Daily.co SDK -->
+<script src="https://unpkg.com/@daily-co/daily-js"></script>
+
+<!-- Video Call JS -->
+<script src="/static/js/video.js"></script>
+
+<script>
+// Initialize chat functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const chatForm = document.getElementById('chat-form');
+    const chatInput = document.getElementById('chat-input');
+    const chatMessages = document.getElementById('chat-messages');
+    
+    // Add support for Daily.co's built-in chat
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const message = chatInput.value.trim();
+        
+        if (message && window.call) {
+            // Send message using Daily.co's sendAppMessage
+            window.call.sendAppMessage({ type: 'chat-message', message: message });
+            
+            // Display the message
+            const messageEl = document.createElement('div');
+            messageEl.className = 'flex justify-end mb-3';
+            messageEl.innerHTML = `
+                <div class="bg-blue-500 text-white rounded-lg py-2 px-3 max-w-xs">
+                    <p class="text-sm">${message}</p>
+                    <p class="text-xs text-blue-200 text-right mt-1">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                </div>
+            `;
+            chatMessages.appendChild(messageEl);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            // Clear input
+            chatInput.value = '';
+        }
+    });
+    
+    // Listen for incoming chat messages
+    if (window.call) {
+        window.call.on('app-message', function(event) {
+            if (event.data.type === 'chat-message') {
+                const message = event.data.message;
+                const messageEl = document.createElement('div');
+                messageEl.className = 'flex justify-start mb-3';
+                messageEl.innerHTML = `
+                    <div class="bg-gray-200 rounded-lg py-2 px-3 max-w-xs">
+                        <p class="text-xs text-gray-600 mb-1">${event.fromId}</p>
+                        <p class="text-sm">${message}</p>
+                        <p class="text-xs text-gray-500 text-right mt-1">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                `;
+                chatMessages.appendChild(messageEl);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,315 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Chikitsa360{% endblock %}
+
+{% block content %}
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 py-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h1 class="text-2xl md:text-3xl font-bold text-white">Admin Dashboard</h1>
+        <p class="mt-2 text-indigo-100">Manage users, appointments, and system operations</p>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="bg-indigo-100 rounded-full p-3 mr-4">
+                    <svg class="h-8 w-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Total Users</p>
+                    <h3 class="text-2xl font-bold text-gray-800">{{ total_users }}</h3>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <span class="text-indigo-600">{{ total_doctors }}</span> Doctors, 
+                        <span class="text-indigo-600">{{ total_patients }}</span> Patients
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="bg-green-100 rounded-full p-3 mr-4">
+                    <svg class="h-8 w-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Appointments Today</p>
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        {% with appointments_today=appointments_today|default:"0" %}
+                        {{ appointments_today }}
+                        {% endwith %}
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <span class="text-green-600">{% with appointments_confirmed=appointments_confirmed|default:"0" %}{{ appointments_confirmed }}{% endwith %}</span> Confirmed
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white shadow rounded-lg p-6">
+            <div class="flex items-center">
+                <div class="bg-yellow-100 rounded-full p-3 mr-4">
+                    <svg class="h-8 w-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-gray-500 text-sm">Total Revenue</p>
+                    <h3 class="text-2xl font-bold text-gray-800">
+                        {% with total_revenue=total_revenue|default:"0" %}
+                        ₹{{ total_revenue }}
+                        {% endwith %}
+                    </h3>
+                    <p class="text-xs text-gray-500 mt-1">
+                        <span class="text-yellow-600">{% with payments_count=payments_count|default:"0" %}{{ payments_count }}{% endwith %}</span> Payments Processed
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard Content -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- User Management -->
+        <div class="md:col-span-2">
+            <div class="bg-white shadow rounded-lg mb-6">
+                <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-800">Recent Registrations</h2>
+                    <a href="/admin/auth_app/user/" class="text-sm text-indigo-600 hover:text-indigo-500">View all</a>
+                </div>
+                <div class="px-6 py-4 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Joined</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for user in recent_users %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:"-" }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if user.role == 'DOCTOR' %}bg-green-100 text-green-800{% elif user.role == 'PATIENT' %}bg-blue-100 text-blue-800{% else %}bg-purple-100 text-purple-800{% endif %}">
+                                        {{ user.get_role_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {{ user.date_joined|date:"M d, Y" }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {% if user.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                        {% if user.is_active %}Active{% else %}Inactive{% endif %}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                    No recent registrations
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Recent Appointments -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+                    <h2 class="text-lg font-medium text-gray-800">Recent Appointments</h2>
+                    <a href="/admin/consultation_app/appointment/" class="text-sm text-indigo-600 hover:text-indigo-500">View all</a>
+                </div>
+                <div class="px-6 py-4 overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Patient</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Doctor</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date/Time</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for appointment in recent_appointments %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm font-medium text-gray-900">{{ appointment.patient.get_full_name|default:appointment.patient.email }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-900">Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.email }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-sm text-gray-500">{{ appointment.appointment_date|date:"M d, Y" }}</div>
+                                    <div class="text-sm text-gray-500">{{ appointment.appointment_time|time:"g:i A" }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                        {% if appointment.status == 'CONFIRMED' %}bg-green-100 text-green-800
+                                        {% elif appointment.status == 'COMPLETED' %}bg-blue-100 text-blue-800
+                                        {% elif appointment.status == 'CANCELLED' %}bg-red-100 text-red-800
+                                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                        {{ appointment.get_status_display }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                    {% if appointment.payment %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">Paid</span>
+                                    {% else %}
+                                        <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">Not Paid</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                                    No recent appointments
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column - Quick Stats and System Status -->
+        <div>
+            <!-- User Stats -->
+            <div class="bg-white shadow rounded-lg mb-6">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h2 class="text-lg font-medium text-gray-800">User Statistics</h2>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-4">
+                        <div>
+                            <h3 class="text-sm font-medium text-gray-500">Users by Role</h3>
+                            <div class="mt-2 h-24 bg-gray-50 rounded-md p-2">
+                                <div class="h-full flex items-end">
+                                    <div class="w-1/3 h-full flex flex-col items-center">
+                                        <div class="bg-indigo-500 rounded-t w-full" style="height: {{ admin_height|default:'10' }}%"></div>
+                                        <span class="text-xs mt-1 text-gray-500">Admins</span>
+                                        <span class="text-xs font-medium">{{ admin_count|default:'1' }}</span>
+                                    </div>
+                                    <div class="w-1/3 h-full flex flex-col items-center">
+                                        <div class="bg-green-500 rounded-t w-full" style="height: {{ doctor_height|default:'40' }}%"></div>
+                                        <span class="text-xs mt-1 text-gray-500">Doctors</span>
+                                        <span class="text-xs font-medium">{{ total_doctors }}</span>
+                                    </div>
+                                    <div class="w-1/3 h-full flex flex-col items-center">
+                                        <div class="bg-blue-500 rounded-t w-full" style="height: {{ patient_height|default:'60' }}%"></div>
+                                        <span class="text-xs mt-1 text-gray-500">Patients</span>
+                                        <span class="text-xs font-medium">{{ total_patients }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="pt-4 border-t border-gray-200">
+                            <h3 class="text-sm font-medium text-gray-500">User Activity</h3>
+                            <ul class="mt-2 space-y-2">
+                                <li class="flex justify-between">
+                                    <span class="text-sm text-gray-600">New users (24h):</span>
+                                    <span class="text-sm font-medium">{{ new_users_24h|default:"0" }}</span>
+                                </li>
+                                <li class="flex justify-between">
+                                    <span class="text-sm text-gray-600">New users (week):</span>
+                                    <span class="text-sm font-medium">{{ new_users_week|default:"0" }}</span>
+                                </li>
+                                <li class="flex justify-between">
+                                    <span class="text-sm text-gray-600">Active doctors:</span>
+                                    <span class="text-sm font-medium">{{ active_doctors|default:"0" }}</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- System Status -->
+            <div class="bg-white shadow rounded-lg mb-6">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h2 class="text-lg font-medium text-gray-800">System Status</h2>
+                </div>
+                <div class="px-6 py-4">
+                    <ul class="space-y-3">
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                            <span class="text-sm text-gray-600">Database: <span class="text-green-600 font-medium">Online</span></span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                            <span class="text-sm text-gray-600">Payment Gateway: <span class="text-green-600 font-medium">Online</span></span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                            <span class="text-sm text-gray-600">Video API: <span class="text-green-600 font-medium">Online</span></span>
+                        </li>
+                        <li class="flex items-center">
+                            <div class="flex-shrink-0 h-2 w-2 rounded-full bg-green-500 mr-2"></div>
+                            <span class="text-sm text-gray-600">Email Service: <span class="text-green-600 font-medium">Online</span></span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Quick Actions -->
+            <div class="bg-white shadow rounded-lg">
+                <div class="border-b border-gray-200 px-6 py-4">
+                    <h2 class="text-lg font-medium text-gray-800">Quick Actions</h2>
+                </div>
+                <div class="px-6 py-4">
+                    <div class="space-y-3">
+                        <a href="/admin/auth_app/user/" class="flex items-center px-4 py-2 bg-indigo-50 text-indigo-700 rounded-md hover:bg-indigo-100">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                            </svg>
+                            Manage Users
+                        </a>
+                        <a href="/admin/auth_app/doctorprofile/" class="flex items-center px-4 py-2 bg-green-50 text-green-700 rounded-md hover:bg-green-100">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                            Manage Doctors
+                        </a>
+                        <a href="/admin/consultation_app/appointment/" class="flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                            </svg>
+                            Manage Appointments
+                        </a>
+                        <a href="/admin/payment_app/payment/" class="flex items-center px-4 py-2 bg-yellow-50 text-yellow-700 rounded-md hover:bg-yellow-100">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Manage Payments
+                        </a>
+                        <a href="/admin/transcription_app/transcription/" class="flex items-center px-4 py-2 bg-purple-50 text-purple-700 rounded-md hover:bg-purple-100">
+                            <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            Manage Transcriptions
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consultation Transcript for Patient: {{ patient_name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(to right, #3b82f6, #0ea5e9);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        .content {
+            padding: 30px;
+        }
+        .patient-info {
+            background-color: #f0f9ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .transcription {
+            background-color: #f9fafb;
+            border-radius: 6px;
+            padding: 20px;
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 20px;
+        }
+        .medical-note {
+            background-color: #fef3c7;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-left: 4px solid #d97706;
+        }
+        .footer {
+            background-color: #f1f5f9;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #64748b;
+        }
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        h2 {
+            font-size: 18px;
+            margin-top: 0;
+            color: #1e40af;
+        }
+        p {
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3b82f6;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Consultation Transcript</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear Dr. {{ doctor_name }},</p>
+            
+            <p>Below is the transcript of your recent consultation with a patient. This has been automatically generated using our AI transcription service.</p>
+            
+            <div class="patient-info">
+                <h2>Consultation Details</h2>
+                <p><strong>Patient:</strong> {{ patient_name }}</p>
+                <p><strong>Date:</strong> {{ appointment_date }}</p>
+                <p><strong>Time:</strong> {{ appointment_time }}</p>
+                <p><strong>Duration:</strong> {{ duration }}</p>
+            </div>
+            
+            <div class="medical-note">
+                <p><strong>Important:</strong> Please review this transcript for accuracy and save it to your records. A copy has also been sent to the patient.</p>
+            </div>
+            
+            <h2>Consultation Transcript</h2>
+            
+            <div class="transcription">
+                <p>{{ transcription }}</p>
+            </div>
+            
+            <p>You can access this consultation and all patient records through your Chikitsa360 doctor dashboard.</p>
+            
+            <p>If you have any questions or issues with the transcription service, please contact our provider support at <a href="mailto:doctor-support@chikitsa360.com">doctor-support@chikitsa360.com</a>.</p>
+            
+            <p>Thank you for using Chikitsa360 for your telemedicine practice.</p>
+            
+            <p>Best regards,</p>
+            <p>The Chikitsa360 Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated email, please do not reply. The information contained in this email is confidential, may be privileged, and is intended for the use of the named recipient only.</p>
+            <p>&copy; 2023 Chikitsa360. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

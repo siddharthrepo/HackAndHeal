@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Consultation Transcript</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f8fafc;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #fff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(to right, #3b82f6, #0ea5e9);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        .content {
+            padding: 30px;
+        }
+        .doctor-info {
+            background-color: #f0f9ff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .transcription {
+            background-color: #f9fafb;
+            border-radius: 6px;
+            padding: 20px;
+            border-left: 4px solid #3b82f6;
+            margin-bottom: 20px;
+        }
+        .footer {
+            background-color: #f1f5f9;
+            padding: 20px;
+            text-align: center;
+            font-size: 14px;
+            color: #64748b;
+        }
+        h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        h2 {
+            font-size: 18px;
+            margin-top: 0;
+            color: #1e40af;
+        }
+        p {
+            margin: 10px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #3b82f6;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: 500;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Your Consultation Transcript</h1>
+        </div>
+        
+        <div class="content">
+            <p>Dear {{ patient_name }},</p>
+            
+            <p>Thank you for using Chikitsa360 for your healthcare needs. Below you'll find the transcript of your recent consultation:</p>
+            
+            <div class="doctor-info">
+                <h2>Consultation Details</h2>
+                <p><strong>Doctor:</strong> {{ doctor_name }}</p>
+                <p><strong>Date:</strong> {{ appointment_date }}</p>
+                <p><strong>Time:</strong> {{ appointment_time }}</p>
+                <p><strong>Duration:</strong> {{ duration }}</p>
+            </div>
+            
+            <h2>Consultation Transcript</h2>
+            
+            <div class="transcription">
+                <p>{{ transcription }}</p>
+            </div>
+            
+            <p>This transcript is provided for your reference. If you have any questions about your consultation or treatment plan, please contact your doctor directly.</p>
+            
+            <p>For any technical issues or questions about our services, please contact our support team at <a href="mailto:support@chikitsa360.com">support@chikitsa360.com</a>.</p>
+            
+            <p>Wishing you good health,</p>
+            <p>The Chikitsa360 Team</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated email, please do not reply. The information contained in this email is confidential and may be privileged.</p>
+            <p>&copy; 2023 Chikitsa360. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

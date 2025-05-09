@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Search Results - Chikitsa360{% endblock %}
+
+{% block content %}
+<div class="bg-gray-50 min-h-screen py-12">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Doctor Search Results</h1>
+            <p class="mt-4 text-lg text-gray-600">Find the right healthcare provider for your needs</p>
+        </div>
+
+        <!-- Search Form -->
+        <div class="bg-white shadow-md rounded-lg p-6 mb-8">
+            <form method="get" action="{% url 'doctor_search' %}" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                    <label for="query" class="block text-sm font-medium text-gray-700 mb-1">Name or Keyword</label>
+                    <input type="text" name="query" id="query" value="{{ request.GET.query }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50" placeholder="Search by name or keyword">
+                </div>
+                <div>
+                    <label for="specialty" class="block text-sm font-medium text-gray-700 mb-1">Specialty</label>
+                    <select name="specialty" id="specialty" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                        <option value="">All Specialties</option>
+                        {% for specialty in specialties %}
+                            <option value="{{ specialty.0 }}" {% if request.GET.specialty == specialty.0 %}selected{% endif %}>{{ specialty.1 }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Available Date</label>
+                    <input type="date" name="date" id="date" value="{{ request.GET.date }}" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-500 focus:ring-opacity-50">
+                </div>
+                <div class="md:col-span-3 text-right">
+                    <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        Search Doctors
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Results List -->
+        <div class="space-y-6">
+            {% if doctors %}
+                {% for doctor in doctors %}
+                    <div class="bg-white shadow-md rounded-lg overflow-hidden transition-all hover:shadow-lg">
+                        <div class="p-6 md:flex md:items-center md:justify-between">
+                            <div class="md:flex md:items-center">
+                                <div class="flex-shrink-0 h-20 w-20 bg-blue-100 rounded-full flex items-center justify-center">
+                                    {% if doctor.doctor_profile.profile_picture %}
+                                        <img src="{{ doctor.doctor_profile.profile_picture }}" alt="{{ doctor.get_full_name }}" class="h-20 w-20 rounded-full object-cover">
+                                    {% else %}
+                                        <span class="text-blue-600 font-bold text-2xl">{{ doctor.first_name|slice:":1" }}{{ doctor.last_name|slice:":1" }}</span>
+                                    {% endif %}
+                                </div>
+                                <div class="mt-4 md:mt-0 md:ml-6">
+                                    <h2 class="text-xl font-semibold text-gray-900">
+                                        Dr. {{ doctor.get_full_name }}
+                                    </h2>
+                                    <p class="text-sm text-gray-600">{{ doctor.doctor_profile.specialty }}</p>
+                                    <div class="mt-2 flex items-center text-sm text-gray-600">
+                                        <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                        </svg>
+                                        {{ doctor.doctor_profile.years_of_experience }} years experience
+                                    </div>
+                                    <div class="mt-2 flex items-center text-sm text-gray-600">
+                                        <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        </svg>
+                                        {{ doctor.doctor_profile.location }}
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-6 md:mt-0">
+                                <a href="{% url 'doctor_detail' doctor.id %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                                    View Profile
+                                </a>
+                            </div>
+                        </div>
+                        <div class="border-t border-gray-200 px-6 py-4 bg-gray-50">
+                            <p class="text-sm text-gray-600">{{ doctor.doctor_profile.bio|truncatechars:200 }}</p>
+                        </div>
+                    </div>
+                {% endfor %}
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <div class="py-4 flex justify-center">
+                    <nav aria-label="Pagination">
+                        <ul class="flex space-x-1">
+                            {% if page_obj.has_previous %}
+                            <li>
+                                <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                    Previous
+                                </a>
+                            </li>
+                            {% endif %}
+
+                            {% for i in paginator.page_range %}
+                                {% if page_obj.number == i %}
+                                <li>
+                                    <span class="px-3 py-2 rounded-md text-sm font-medium text-white bg-blue-600">
+                                        {{ i }}
+                                    </span>
+                                </li>
+                                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                <li>
+                                    <a href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                        {{ i }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <li>
+                                <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="px-3 py-2 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                                    Next
+                                </a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                </div>
+                {% endif %}
+
+            {% else %}
+                <div class="bg-white shadow-md rounded-lg p-8 text-center">
+                    <svg class="mx-auto h-16 w-16 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h3 class="mt-4 text-lg font-medium text-gray-900">No doctors found</h3>
+                    <p class="mt-2 text-sm text-gray-600">
+                        We couldn't find any doctors matching your search criteria. Try adjusting your filters or search for something else.
+                    </p>
+                    <div class="mt-6">
+                        <a href="{% url 'home' %}" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Back to Home
+                        </a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

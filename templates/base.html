@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{% block title %}Chikitsa360: Healthcare! Everywhere!{% endblock %}</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Feather Icons -->
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/tailwind.css">
+    <link rel="stylesheet" href="/static/css/custom.css">
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col {% if user.is_authenticated %}logged-in{% endif %}">
+    <!-- Header -->
+    <header class="c360-header">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <!-- Logo -->
+                    <div class="flex-shrink-0 flex items-center">
+                        <a href="{% url 'home' %}" class="flex items-center">
+                            <img src="/static/images/chikitsa360-logo.svg" alt="Chikitsa360" class="c360-logo h-10">
+                        </a>
+                    </div>
+                    
+                    <!-- Navigation Links -->
+                    <nav class="hidden sm:ml-6 sm:flex sm:space-x-6">
+                        <a href="{% url 'home' %}" class="inline-flex items-center px-1 pt-1 border-b-2 {% if request.path == '/' %}border-primary-teal text-gray-900{% else %}border-transparent text-gray-500 hover:text-primary-teal hover:border-primary-light{% endif %}">
+                            Home
+                        </a>
+                        <a href="{% url 'doctor_search' %}" class="inline-flex items-center px-1 pt-1 border-b-2 {% if 'doctor_search' in request.path %}border-primary-teal text-gray-900{% else %}border-transparent text-gray-500 hover:text-primary-teal hover:border-primary-light{% endif %}">
+                            Find Doctors
+                        </a>
+                        
+                        {% if user.is_authenticated %}
+                            {% if user.is_patient %}
+                                <a href="{% url 'patient_appointments' %}" class="inline-flex items-center px-1 pt-1 border-b-2 {% if 'appointments' in request.path %}border-primary-teal text-gray-900{% else %}border-transparent text-gray-500 hover:text-primary-teal hover:border-primary-light{% endif %}">
+                                    My Appointments
+                                </a>
+                            {% elif user.is_doctor %}
+                                <a href="{% url 'doctor_appointments' %}" class="inline-flex items-center px-1 pt-1 border-b-2 {% if 'appointments' in request.path %}border-primary-teal text-gray-900{% else %}border-transparent text-gray-500 hover:text-primary-teal hover:border-primary-light{% endif %}">
+                                    My Appointments
+                                </a>
+                                <a href="{% url 'doctor_availability' %}" class="inline-flex items-center px-1 pt-1 border-b-2 {% if 'availability' in request.path %}border-primary-teal text-gray-900{% else %}border-transparent text-gray-500 hover:text-primary-teal hover:border-primary-light{% endif %}">
+                                    My Availability
+                                </a>
+                            {% elif user.is_admin %}
+                                <a href="{% url 'admin_dashboard' %}" class="inline-flex items-center px-1 pt-1 border-b-2 {% if 'admin_dashboard' in request.path %}border-primary-teal text-gray-900{% else %}border-transparent text-gray-500 hover:text-primary-teal hover:border-primary-light{% endif %}">
+                                    Admin Dashboard
+                                </a>
+                            {% endif %}
+                        {% endif %}
+                    </nav>
+                </div>
+                
+                <!-- User Menu -->
+                <div class="hidden sm:ml-6 sm:flex sm:items-center">
+                    {% if user.is_authenticated %}
+                        <div class="ml-3 relative">
+                            <div class="flex items-center">
+                                <span class="mr-2 text-sm font-medium text-gray-700">
+                                    {{ user.get_full_name|default:user.email }}
+                                    <span class="text-xs text-gray-500">({{ user.get_role_display }})</span>
+                                </span>
+                                <button type="button" class="bg-white rounded-full flex text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-teal" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
+                                    <svg class="h-8 w-8 rounded-full bg-primary-light bg-opacity-20 text-primary-teal p-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="hidden origin-top-right absolute right-0 mt-2 w-48 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none z-50" id="user-menu" role="menu" aria-orientation="vertical" aria-labelledby="user-menu-button" tabindex="-1">
+                                {% if user.is_patient %}
+                                    <a href="{% url 'patient_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:bg-opacity-20 hover:text-primary-teal" role="menuitem">
+                                        <i class="fas fa-gauge-high text-primary-teal mr-2"></i> Dashboard
+                                    </a>
+                                {% elif user.is_doctor %}
+                                    <a href="{% url 'doctor_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:bg-opacity-20 hover:text-primary-teal" role="menuitem">
+                                        <i class="fas fa-gauge-high text-primary-teal mr-2"></i> Dashboard
+                                    </a>
+                                {% elif user.is_admin %}
+                                    <a href="{% url 'admin_dashboard' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:bg-opacity-20 hover:text-primary-teal" role="menuitem">
+                                        <i class="fas fa-gauge-high text-primary-teal mr-2"></i> Dashboard
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:bg-opacity-20 hover:text-primary-teal" role="menuitem">
+                                    <i class="fas fa-user text-primary-teal mr-2"></i> Profile
+                                </a>
+                                <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:bg-opacity-20 hover:text-primary-teal" role="menuitem">
+                                    <i class="fas fa-sign-out-alt text-primary-teal mr-2"></i> Sign out
+                                </a>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="flex space-x-4">
+                            <a href="{% url 'login' %}" class="c360-btn-secondary">
+                                <i class="fas fa-sign-in-alt mr-1"></i> Log in
+                            </a>
+                            <a href="{% url 'register' %}" class="c360-btn-primary">
+                                <i class="fas fa-user-plus mr-1"></i> Sign up
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Mobile menu button -->
+                <div class="-mr-2 flex items-center sm:hidden">
+                    <button type="button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-primary-teal hover:bg-primary-light hover:bg-opacity-20 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary-teal" id="mobile-menu-toggle" aria-expanded="false">
+                        <span class="sr-only">Open main menu</span>
+                        <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div class="sm:hidden hidden" id="mobile-menu">
+            <div class="pt-2 pb-3 space-y-1">
+                <a href="{% url 'home' %}" class="block pl-3 pr-4 py-2 border-l-4 {% if request.path == '/' %}border-primary-teal text-primary-teal bg-primary-light bg-opacity-20{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-primary-light hover:text-primary-teal{% endif %}">
+                    Home
+                </a>
+                <a href="{% url 'doctor_search' %}" class="block pl-3 pr-4 py-2 border-l-4 {% if 'doctor_search' in request.path %}border-primary-teal text-primary-teal bg-primary-light bg-opacity-20{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-primary-light hover:text-primary-teal{% endif %}">
+                    Find Doctors
+                </a>
+                
+                {% if user.is_authenticated %}
+                    {% if user.is_patient %}
+                        <a href="{% url 'patient_appointments' %}" class="block pl-3 pr-4 py-2 border-l-4 {% if 'appointments' in request.path %}border-primary-teal text-primary-teal bg-primary-light bg-opacity-20{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-primary-light hover:text-primary-teal{% endif %}">
+                            My Appointments
+                        </a>
+                        <a href="{% url 'patient_dashboard' %}" class="block pl-3 pr-4 py-2 border-l-4 {% if 'dashboard' in request.path %}border-primary-teal text-primary-teal bg-primary-light bg-opacity-20{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-primary-light hover:text-primary-teal{% endif %}">
+                            Dashboard
+                        </a>
+                    {% elif user.is_doctor %}
+                        <a href="{% url 'doctor_appointments' %}" class="block pl-3 pr-4 py-2 border-l-4 {% if 'appointments' in request.path %}border-primary-teal text-primary-teal bg-primary-light bg-opacity-20{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-primary-light hover:text-primary-teal{% endif %}">
+                            My Appointments
+                        </a>
+                        <a href="{% url 'doctor_availability' %}" class="block pl-3 pr-4 py-2 border-l-4 {% if 'availability' in request.path %}border-primary-teal text-primary-teal bg-primary-light bg-opacity-20{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-primary-light hover:text-primary-teal{% endif %}">
+                            My Availability
+                        </a>
+                        <a href="{% url 'doctor_dashboard' %}" class="block pl-3 pr-4 py-2 border-l-4 {% if 'dashboard' in request.path %}border-primary-teal text-primary-teal bg-primary-light bg-opacity-20{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-primary-light hover:text-primary-teal{% endif %}">
+                            Dashboard
+                        </a>
+                    {% elif user.is_admin %}
+                        <a href="{% url 'admin_dashboard' %}" class="block pl-3 pr-4 py-2 border-l-4 {% if 'dashboard' in request.path %}border-primary-teal text-primary-teal bg-primary-light bg-opacity-20{% else %}border-transparent text-gray-600 hover:bg-gray-50 hover:border-primary-light hover:text-primary-teal{% endif %}">
+                            Admin Dashboard
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'profile' %}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 hover:bg-gray-50 hover:border-primary-light hover:text-primary-teal">
+                        Profile
+                    </a>
+                    <a href="{% url 'logout' %}" class="block pl-3 pr-4 py-2 border-l-4 border-transparent text-gray-600 hover:bg-gray-50 hover:border-primary-light hover:text-primary-teal">
+                        Sign out
+                    </a>
+                {% else %}
+                    <div class="pt-4 pb-3 border-t border-gray-200">
+                        <div class="flex items-center px-4 space-x-5">
+                            <a href="{% url 'login' %}" class="flex items-center text-base font-medium text-primary-teal hover:text-primary-dark">
+                                <i class="fas fa-sign-in-alt mr-2"></i> Log in
+                            </a>
+                            <span class="text-gray-300">|</span>
+                            <a href="{% url 'register' %}" class="flex items-center text-base font-medium text-primary-teal hover:text-primary-dark">
+                                <i class="fas fa-user-plus mr-2"></i> Sign up
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+    
+    <!-- Main Content -->
+    <main class="flex-grow">
+        {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
+            {% for message in messages %}
+            <div class="p-4 mb-4 rounded-md {{ message.tags }} {% if message.tags == 'error' %}bg-red-50 text-red-700{% elif message.tags == 'success' %}bg-green-50 text-green-700{% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-700{% else %}bg-blue-50 text-blue-700{% endif %}">
+                {{ message }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Main Call to Action -->
+    <div class="bg-primary-teal py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col md:flex-row justify-between items-center">
+                <div class="mb-8 md:mb-0 text-white">
+                    <h2 class="text-2xl md:text-3xl font-bold mb-2">Ready to experience healthcare from anywhere?</h2>
+                    <p class="text-lg">Join thousands of patients who have already benefited from our telehealth platform.</p>
+                </div>
+                <div>
+                    <a href="{% url 'register' %}" class="inline-block bg-white text-primary-teal py-3 px-8 rounded-md font-medium hover:bg-gray-100 transition-colors">
+                        Get Started Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Footer -->
+    <footer class="bg-white mt-0 py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-heart-pulse text-primary-teal mr-2"></i> 
+                        Telehealth Platform
+                    </h3>
+                    <p class="text-gray-600 mb-4">
+                        A secure, modular telehealth solution for accessing healthcare from anywhere. Connect with qualified providers, schedule appointments, and attend virtual consultations all in one place.
+                    </p>
+                    <div class="flex space-x-4 mt-4">
+                        <a href="#" class="text-primary-teal hover:text-primary-dark transition-colors">
+                            <i class="fab fa-facebook-f"></i>
+                        </a>
+                        <a href="#" class="text-primary-teal hover:text-primary-dark transition-colors">
+                            <i class="fab fa-twitter"></i>
+                        </a>
+                        <a href="#" class="text-primary-teal hover:text-primary-dark transition-colors">
+                            <i class="fab fa-linkedin-in"></i>
+                        </a>
+                        <a href="#" class="text-primary-teal hover:text-primary-dark transition-colors">
+                            <i class="fab fa-instagram"></i>
+                        </a>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-link text-primary-teal mr-2"></i>
+                        Quick Links
+                    </h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="{% url 'home' %}" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
+                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Home
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'login' %}" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
+                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Login
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'register' %}" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
+                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Register as Patient
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{% url 'register' %}" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
+                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Register as Doctor
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-stethoscope text-primary-teal mr-2"></i>
+                        Services
+                    </h3>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
+                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Video Consultations
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
+                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Secure Messaging
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
+                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> E-Prescriptions
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
+                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Medical Records
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
+                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Follow-up Care
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <i class="fas fa-envelope text-primary-teal mr-2"></i>
+                        Contact Us
+                    </h3>
+                    <ul class="space-y-2">
+                        <li class="flex items-start text-gray-600">
+                            <i class="fas fa-envelope text-primary-teal mr-2 mt-1"></i>
+                            <span>support@chikitsa360.com</span>
+                        </li>
+                        <li class="flex items-start text-gray-600">
+                            <i class="fas fa-phone text-primary-teal mr-2 mt-1"></i>
+                            <span>(123) 456-7890</span>
+                        </li>
+                        <li class="flex items-start text-gray-600">
+                            <i class="fas fa-map-marker-alt text-primary-teal mr-2 mt-1"></i>
+                            <span>123, Main Street, City, Country</span>
+                        </li>
+                        <li class="flex items-start text-gray-600">
+                            <i class="fas fa-clock text-primary-teal mr-2 mt-1"></i>
+                            <span>Mon-Fri: 8am - 8pm</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-200 mt-8 pt-8">
+                <div class="flex flex-col md:flex-row justify-between items-center">
+                    <p class="text-gray-500 text-sm mb-4 md:mb-0">
+                        &copy; {% now "Y" %} Chikitsa360: Healthcare! Everywhere! All rights reserved.
+                    </p>
+                    <div class="flex space-x-6">
+                        <a href="#" class="text-gray-500 hover:text-primary-teal text-sm transition-colors">
+                            Privacy Policy
+                        </a>
+                        <a href="#" class="text-gray-500 hover:text-primary-teal text-sm transition-colors">
+                            Terms of Service
+                        </a>
+                        <a href="#" class="text-gray-500 hover:text-primary-teal text-sm transition-colors">
+                            Contact Us
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+    
+    <!-- jQuery (needed for some interactions) -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Main JS -->
+    <script src="/static/js/main.js"></script>
+    <script src="/static/js/animations.js"></script>
+    
+    <!-- User menu toggle script -->
+    <script>
+        // User menu toggle
+        const userMenuButton = document.getElementById('user-menu-button');
+        const userMenu = document.getElementById('user-menu');
+        
+        if (userMenuButton && userMenu) {
+            userMenuButton.addEventListener('click', function() {
+                userMenu.classList.toggle('hidden');
+            });
+            
+            // Close when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!userMenuButton.contains(event.target) && !userMenu.contains(event.target)) {
+                    userMenu.classList.add('hidden');
+                }
+            });
+        }
+        
+        // Mobile menu toggle
+        const mobileMenuToggle = document.getElementById('mobile-menu-toggle');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuToggle && mobileMenu) {
+            mobileMenuToggle.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+        }
+        
+        // Initialize feather icons
+        feather.replace();
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>
