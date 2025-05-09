@@ -188,31 +188,46 @@ class AvailabilityDeleteView(LoginRequiredMixin, DoctorRequiredMixin, DeleteView
         messages.success(self.request, "Availability slot deleted successfully!")
         return reverse_lazy('doctor_availability')
 
-class DoctorAvailabilityView(LoginRequiredMixin, DoctorRequiredMixin, ListView):
-    """
-    View for doctors to see and manage their availability slots.
-    """
-    model = Availability
-    template_name = 'consultation/doctor_availability.html'
-    context_object_name = 'availabilities'
-    
-    def get_queryset(self):
-        return Availability.objects.filter(doctor=self.request.user).order_by('date', 'start_time')
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['form'] = AvailabilityForm()
-        
-        # Group availabilities by date
+from django.views import View
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+class DoctorAvailabilityView(LoginRequiredMixin, DoctorRequiredMixin, View):
+    def get(self, request):
+        form = AvailabilityForm()
+        availabilities = Availability.objects.filter(doctor=request.user).order_by('date', 'start_time')
+
+        # Group by date
         availabilities_by_date = {}
-        for availability in context['availabilities']:
+        for availability in availabilities:
             date_str = availability.date.strftime('%Y-%m-%d')
-            if date_str not in availabilities_by_date:
-                availabilities_by_date[date_str] = []
-            availabilities_by_date[date_str].append(availability)
-        
-        context['availabilities_by_date'] = availabilities_by_date
-        return context
+            availabilities_by_date.setdefault(date_str, []).append(availability)
+
+        return render(request, 'consultation/doctor_availability.html', {
+            'form': form,
+            'availabilities_by_date': availabilities_by_date
+        })
+
+    def post(self, request):
+        form = AvailabilityForm(request.POST)
+        if form.is_valid():
+            new_slot = form.save(commit=False)
+            new_slot.doctor = request.user
+            new_slot.save()
+            messages.success(request, "Availability slot added successfully.")
+            return redirect('doctor_availability')  # replace with your actual URL name
+        else:
+            availabilities = Availability.objects.filter(doctor=request.user).order_by('date', 'start_time')
+            availabilities_by_date = {}
+            for availability in availabilities:
+                date_str = availability.date.strftime('%Y-%m-%d')
+                availabilities_by_date.setdefault(date_str, []).append(availability)
+
+            return render(request, 'consultation/doctor_availability.html', {
+                'form': form,
+                'availabilities_by_date': availabilities_by_date
+            })
+
 
 class BookAppointmentView(LoginRequiredMixin, PatientRequiredMixin, CreateView):
     """
@@ -446,32 +461,31 @@ class DoctorAppointmentsView(LoginRequiredMixin, DoctorRequiredMixin, ListView):
     model = Appointment
     template_name = 'consultation/doctor_appointments.html'
     context_object_name = 'appointments'
-    
+
     def get_queryset(self):
         return Appointment.objects.filter(doctor=self.request.user).order_by('-appointment_date', '-appointment_time')
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        # Separate upcoming and past appointments
+
         today = timezone.now().date()
-        
-        upcoming_appointments = []
-        today_appointments = []
-        past_appointments = []
-        
-        for appointment in context['appointments']:
-            if appointment.appointment_date > today:
-                upcoming_appointments.append(appointment)
-            elif appointment.appointment_date == today:
-                today_appointments.append(appointment)
+        upcoming = []
+        today_ = []
+        past = []
+
+        for appt in context['appointments']:
+            if appt.appointment_date > today:
+                upcoming.append(appt)
+            elif appt.appointment_date == today:
+                today_.append(appt)
             else:
-                past_appointments.append(appointment)
-        
-        context['upcoming_appointments'] = upcoming_appointments
-        context['today_appointments'] = today_appointments
-        context['past_appointments'] = past_appointments
-        
+                past.append(appt)
+
+        context['appointment_sections'] = [
+            {"label": "Today's Appointments", "appointments": today_},
+            {"label": "Upcoming Appointments", "appointments": upcoming},
+            {"label": "Past Appointments", "appointments": past},
+        ]
         return context
 
 class UpdateAppointmentStatusView(LoginRequiredMixin, DoctorRequiredMixin, View):

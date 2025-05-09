@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load form_filters %}
+
+{% block title %}Manage Availability{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4">
+    <h2 class="text-2xl font-bold text-gray-800 mb-6">Manage Your Availability</h2>
+
+    <!-- Form Section -->
+<div class="bg-white p-6 rounded-lg shadow mb-10">
+    <h3 class="text-lg font-semibold mb-4">Add New Availability Slot</h3>
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+        <div>
+            <label for="id_date" class="block text-sm font-medium text-gray-700">Date</label>
+            {{ form.date }}
+            <p class="text-xs text-gray-500 mt-1">{{ form.date.help_text }}</p>
+        </div>
+        <div>
+            <label for="id_start_time" class="block text-sm font-medium text-gray-700">Start Time</label>
+            {{ form.start_time }}
+            <p class="text-xs text-gray-500 mt-1">{{ form.start_time.help_text }}</p>
+        </div>
+        <div>
+            <label for="id_end_time" class="block text-sm font-medium text-gray-700">End Time</label>
+            {{ form.end_time }}
+            <p class="text-xs text-gray-500 mt-1">{{ form.end_time.help_text }}</p>
+        </div>
+        
+        <!-- ✅ Submit Button -->
+        <div>
+            <button type="submit" class="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-5 py-2 rounded">
+                ➕ Add Slot
+            </button>
+        </div>
+    </form>
+</div>
+
+
+    <!-- Availability List Section -->
+    <div class="bg-white p-6 rounded-lg shadow">
+        <h3 class="text-lg font-semibold mb-4">Your Availability Slots</h3>
+        {% if availabilities_by_date %}
+            {% for date, slots in availabilities_by_date.items %}
+                <div class="mb-6">
+                    <h4 class="text-md font-bold text-gray-800 mb-2">{{ date }}</h4>
+                    <div class="space-y-3">
+                        {% for slot in slots %}
+                            <div class="flex justify-between items-center p-4 bg-gray-100 rounded-md border">
+                                <div>
+                                    <p class="text-gray-800 font-medium">
+                                        {{ slot.start_time|time:"H:i" }} - {{ slot.end_time|time:"H:i" }}
+                                    </p>
+                                    {% if slot.is_past %}
+                                        <p class="text-sm text-red-500">This slot is in the past.</p>
+                                    {% elif slot.is_booked %}
+                                        <p class="text-sm text-yellow-600">Booked</p>
+                                    {% else %}
+                                        <p class="text-sm text-green-600">Available</p>
+                                    {% endif %}
+                                </div>
+                                {% if not slot.is_booked %}
+                                    <form method="post" action="{% url 'availability_delete' slot.id %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="text-sm bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600">
+                                            Delete
+                                        </button>
+                                    </form>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="text-gray-600 text-sm">You haven’t added any availability slots yet.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
