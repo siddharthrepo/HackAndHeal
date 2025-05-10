@@ -98,6 +98,14 @@ class DoctorSearchView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['search_form'] = DoctorSearchForm(self.request.GET)
+        context['specialties'] = (
+            User.objects
+            .filter(role=User.Role.DOCTOR, is_active=True)
+            .values_list('doctor_profile__specialty', flat=True)
+            .distinct()
+            .order_by('doctor_profile__specialty')
+        )
+
         
         # Add doctor profiles to the context
         doctors_with_profiles = []
@@ -119,7 +127,7 @@ class DoctorDetailView(DetailView):
     Public view of a doctor's profile and availability.
     """
     model = User
-    template_name = 'doctor_detail.html'
+    template_name = 'doctor/doctor_detail.html'
     context_object_name = 'doctor'
     
     def get_object(self, queryset=None):
@@ -235,7 +243,7 @@ class BookAppointmentView(LoginRequiredMixin, PatientRequiredMixin, CreateView):
     """
     model = Appointment
     form_class = AppointmentForm
-    template_name = 'consultation/book_appointment.html'
+    template_name = 'patient/book_appointment.html'
     
     def dispatch(self, request, *args, **kwargs):
         # Get the availability object
@@ -428,7 +436,7 @@ class PatientAppointmentsView(LoginRequiredMixin, PatientRequiredMixin, ListView
     View for patients to see their appointments.
     """
     model = Appointment
-    template_name = 'consultation/patient_appointments.html'
+    template_name = 'patient/patient_appointments.html'
     context_object_name = 'appointments'
     
     def get_queryset(self):
@@ -459,7 +467,7 @@ class DoctorAppointmentsView(LoginRequiredMixin, DoctorRequiredMixin, ListView):
     View for doctors to see their appointments.
     """
     model = Appointment
-    template_name = 'consultation/doctor_appointments.html'
+    template_name = 'doctor/doctor_appointments.html'
     context_object_name = 'appointments'
 
     def get_queryset(self):
