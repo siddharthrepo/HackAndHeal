@@ -1,0 +1,79 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load tz %}
+
+{% block title %}My Appointments{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-3xl font-bold text-gray-800">My Appointments</h2>
+        <a href="{% url 'doctor_search' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition">
+            + Book Appointment
+        </a>
+    </div>
+
+    <!-- UPCOMING APPOINTMENTS -->
+    <div class="mb-10">
+        <h3 class="text-xl font-semibold text-green-700 mb-4">Upcoming Appointments</h3>
+        {% if upcoming_appointments %}
+            <div class="space-y-4">
+                {% for appointment in upcoming_appointments %}
+                    <div class="bg-white shadow-md rounded-lg p-4 flex justify-between items-center">
+                        <div>
+                            <p class="text-gray-900 font-medium">With Dr. {{ appointment.doctor.get_full_name }}</p>
+                            <p class="text-sm text-gray-600">
+                                {{ appointment.appointment_date }} at {{ appointment.appointment_time|time:"H:i" }}
+                            </p>
+                            <p class="text-sm text-gray-500">Status: {{ appointment.get_status_display }}</p>
+                            {% if appointment.reason %}
+                                <p class="text-sm text-gray-400">Reason: {{ appointment.reason }}</p>
+                            {% endif %}
+                        </div>
+                        <div class="space-x-2">
+                            <a href="{{ appointment.get_absolute_url }}"
+                               class="text-blue-600 hover:underline text-sm">View</a>
+                            {% if appointment.status != 'CANCELLED' and not appointment.is_past %}
+                                <form method="post" action="{% url 'cancel_appointment' appointment.pk %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-red-600 hover:underline text-sm">Cancel</button>
+                                </form>
+                            {% endif %}
+                            {% if appointment.can_join %}
+                                <a href="{% url 'join_video_call' appointment.pk %}"
+                                   class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">Join</a>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500">You have no upcoming appointments.</p>
+        {% endif %}
+    </div>
+
+    <!-- PAST APPOINTMENTS -->
+    <div>
+        <h3 class="text-xl font-semibold text-gray-700 mb-4">Past Appointments</h3>
+        {% if past_appointments %}
+            <div class="space-y-4">
+                {% for appointment in past_appointments %}
+                    <div class="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                        <div>
+                            <p class="text-gray-800 font-medium">With Dr. {{ appointment.doctor.get_full_name }}</p>
+                            <p class="text-sm text-gray-600">
+                                {{ appointment.appointment_date }} at {{ appointment.appointment_time|time:"H:i" }}
+                            </p>
+                            <p class="text-sm text-gray-500">Status: {{ appointment.get_status_display }}</p>
+                        </div>
+                        <a href="{{ appointment.get_absolute_url }}"
+                           class="text-blue-600 hover:underline text-sm mt-2 inline-block">View</a>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <p class="text-gray-500">No past appointments.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
