@@ -17,61 +17,47 @@ import hmac
 import hashlib
 
 class PaymentCheckoutView(LoginRequiredMixin, View):
-    """
-    View for initiating payment for an appointment.
-    """
     def get(self, request, appointment_id):
         appointment = get_object_or_404(Appointment, id=appointment_id)
-        
-        # Check if user is the patient of this appointment
+
         if request.user != appointment.patient:
             messages.error(request, "You don't have permission to make this payment.")
             return redirect('home')
-        
+
         # Check if payment already exists
         try:
             payment = Payment.objects.get(appointment=appointment)
             if payment.status == Payment.Status.COMPLETED:
                 messages.info(request, "This appointment has already been paid for.")
                 return redirect('appointment_detail', pk=appointment.id)
-            
-            if payment.status == Payment.Status.PENDING and payment.razorpay_order_id:
-                # Use existing order
-                order_id = payment.razorpay_order_id
-                amount = payment.amount
-            else:
-                # Create new Razorpay order
-                client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-                
-                amount = int(appointment.doctor.doctor_profile.consultation_fee * 100)  # Amount in paisa
-                currency = "INR"
-                
-                data = {
-                    'amount': amount,
-                    'currency': currency,
-                    'receipt': f"receipt_{appointment.id}",
-                    'notes': {
-                        'appointment_id': str(appointment.id),
-                        'patient_email': appointment.patient.email,
-                        'doctor_name': appointment.doctor.get_full_name()
-                    }
-                }
-                
-                razorpay_order = client.order.create(data=data)
-                order_id = razorpay_order['id']
-                
-                # Update payment record
-                payment.amount = appointment.doctor.doctor_profile.consultation_fee
-                payment.razorpay_order_id = order_id
-                payment.save()
-        
         except Payment.DoesNotExist:
-            # Create a new payment
-            client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
-            
-            amount = int(appointment.doctor.doctor_profile.consultation_fee * 100)  # Amount in paisa
-            currency = "INR"
-            
+            payment = None
+
+        if not settings.RAZORPAY_ENABLED:
+            # Simulate successful payment
+            if not payment:
+                payment = Payment.objects.create(
+                    appointment=appointment,
+                    patient=request.user,
+                    amount=appointment.doctor.doctor_profile.consultation_fee,
+                    currency="INR",
+                    razorpay_order_id="SIMULATED_ORDER_ID",
+                    status=Payment.Status.COMPLETED
+                )
+            else:
+                payment.status = Payment.Status.COMPLETED
+                payment.razorpay_order_id = "SIMULATED_ORDER_ID"
+                payment.save()
+
+            messages.success(request, "Payment has been simulated successfully.")
+            return redirect('appointment_detail', pk=appointment.id)
+
+        # Existing Razorpay logic below if enabled
+        client = razorpay.Client(auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET))
+        amount = int(appointment.doctor.doctor_profile.consultation_fee * 100)  # paisa
+        currency = "INR"
+
+        if not payment or not payment.razorpay_order_id:
             data = {
                 'amount': amount,
                 'currency': currency,
@@ -82,34 +68,38 @@ class PaymentCheckoutView(LoginRequiredMixin, View):
                     'doctor_name': appointment.doctor.get_full_name()
                 }
             }
-            
             razorpay_order = client.order.create(data=data)
             order_id = razorpay_order['id']
-            
-            # Create payment record
-            payment = Payment.objects.create(
-                appointment=appointment,
-                patient=request.user,
-                amount=appointment.doctor.doctor_profile.consultation_fee,
-                currency=currency,
-                razorpay_order_id=order_id,
-                status=Payment.Status.PENDING
-            )
-            
-            amount = appointment.doctor.doctor_profile.consultation_fee
-        
+
+            if not payment:
+                payment = Payment.objects.create(
+                    appointment=appointment,
+                    patient=request.user,
+                    amount=appointment.doctor.doctor_profile.consultation_fee,
+                    currency=currency,
+                    razorpay_order_id=order_id,
+                    status=Payment.Status.PENDING
+                )
+            else:
+                payment.razorpay_order_id = order_id
+                payment.amount = appointment.doctor.doctor_profile.consultation_fee
+                payment.save()
+        else:
+            order_id = payment.razorpay_order_id
+            amount = int(payment.amount * 100)
+
         context = {
             'appointment': appointment,
             'payment': payment,
             'order_id': order_id,
-            'amount': amount,
-            'amount_in_paisa': int(amount * 100),
+            'amount': payment.amount,
+            'amount_in_paisa': amount,
             'currency': 'INR',
             'razorpay_key_id': settings.RAZORPAY_KEY_ID,
             'callback_url': request.build_absolute_uri(reverse('payment_callback')),
             'doctor_profile': appointment.doctor.doctor_profile
         }
-        
+
         return render(request, 'payment/checkout.html', context)
 
 @method_decorator(csrf_exempt, name='dispatch')
