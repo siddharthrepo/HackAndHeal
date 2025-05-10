@@ -108,3 +108,12 @@
 .sr-only {
   @apply absolute w-px h-px -m-px overflow-hidden whitespace-nowrap border-0 p-0;
 }
+    .form-label {
+        @apply block text-sm font-medium text-gray-700;
+    }
+    .form-input {
+        @apply w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500;
+    }
+    .form-textarea {
+        @apply w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm h-28 resize-none focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500;
+    }
