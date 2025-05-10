@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Appointments{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto py-10 px-4">
+    <h2 class="text-2xl font-bold text-gray-800 mb-8">My Appointments</h2>
+
+    {% for section in appointment_sections %}
+        <div class="mb-10">
+            <h3 class="text-xl font-semibold text-primary mb-4">{{ section.label }}</h3>
+            {% if section.appointments %}
+                <div class="space-y-4">
+                    {% for appointment in section.appointments %}
+                        <div class="bg-white p-5 rounded-lg shadow border flex flex-col md:flex-row md:justify-between md:items-center">
+                            <div>
+                                <p class="text-lg font-medium text-gray-800">
+                                    {{ appointment.appointment_date }} — {{ appointment.appointment_time|time:"H:i" }}
+                                </p>
+                                <p class="text-sm text-gray-600">
+                                    Patient: {{ appointment.patient.get_full_name }}
+                                </p>
+                                {% if appointment.reason %}
+                                    <p class="text-sm text-gray-500 mt-1">Reason: {{ appointment.reason }}</p>
+                                {% endif %}
+                                <p class="text-sm mt-1">
+                                    Status: 
+                                    <span class="inline-block px-2 py-1 rounded 
+                                        {% if appointment.status == 'CONFIRMED' %}bg-green-100 text-green-800
+                                        {% elif appointment.status == 'COMPLETED' %}bg-blue-100 text-blue-800
+                                        {% elif appointment.status == 'CANCELLED' %}bg-red-100 text-red-800
+                                        {% elif appointment.status == 'NO_SHOW' %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-gray-100 text-gray-800{% endif %}
+                                    ">
+                                        {{ appointment.get_status_display }}
+                                    </span>
+                                </p>
+                            </div>
+
+                            <!-- Action buttons -->
+                            <div class="mt-4 md:mt-0 flex flex-col space-y-2 md:space-y-0 md:space-x-3 md:flex-row">
+                                {% if appointment.status == 'CONFIRMED' %}
+                                    <a href="{% url 'join_consultation' appointment.pk %}" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium">
+                                        Join Consultation
+                                    </a>
+                                {% endif %}
+                                <a href="{% url 'appointment_detail' appointment.pk %}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm font-medium">
+                                    View Details
+                                </a>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p class="text-sm text-gray-500">No {{ section.label|lower }} available.</p>
+            {% endif %}
+        </div>
+    {% endfor %}
+</div>
+{% endblock %}
