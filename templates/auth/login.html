@@ -1,73 +1,91 @@
 {% extends 'base.html' %}
-{% load widget_tweaks %}
 
 {% block title %}Log in to Chikitsa360{% endblock %}
 
 {% block content %}
-<div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gray-100">
-  <div class="max-w-md w-full c360-card p-6 sm:p-8">
-
-    <!-- Heading -->
-    <div class="text-center mb-6">
-      <h2 class="text-2xl font-bold text-primary-teal">Welcome Back</h2>
-      <p class="mt-1 text-sm text-gray-600">Log in to continue to Chikitsa360</p>
-    </div>
-
-    <!-- Errors -->
-    {% if form.non_field_errors %}
-      <div class="bg-red-50 border border-red-300 text-red-700 px-4 py-3 rounded mb-4">
-        {% for error in form.non_field_errors %}
-          <p>{{ error }}</p>
-        {% endfor %}
-      </div>
-    {% endif %}
-
-    <!-- Form -->
-    <form method="post" novalidate class="space-y-4">
-      {% csrf_token %}
-
-      <!-- Username -->
-      <div>
-        <label for="{{ form.username.id_for_label }}" class="form-label">Email Address</label>
-        {{ form.username|add_class:"form-input" }}
-        {% if form.username.errors %}
-          <p class="form-error">
-            {% for error in form.username.errors %}
-              {{ error }}
-            {% endfor %}
-          </p>
-        {% endif %}
-      </div>
-
-      <!-- Password -->
-      <div>
-        <div class="flex justify-between items-center">
-          <label for="{{ form.password.id_for_label }}" class="form-label">Password</label>
-          <a href="#" class="text-sm text-primary-teal hover:underline">Forgot?</a>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <div class="max-w-md mx-auto">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-500 to-cyan-500 px-6 py-8 text-white">
+                <h2 class="text-2xl font-bold text-center">Log in to your account</h2>
+                <p class="mt-2 text-center text-blue-100">
+                    Access your healthcare, anytime, anywhere
+                </p>
+            </div>
+            
+            <div class="px-6 py-8">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+                        {% for error in form.non_field_errors %}
+                        <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="mb-6">
+                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                            Email Address
+                        </label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <p class="mt-1 text-sm text-red-600">
+                            {% for error in form.username.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-6">
+                        <div class="flex items-center justify-between">
+                            <label for="{{ form.password.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                                Password
+                            </label>
+                            <a href="#" class="text-sm text-blue-600 hover:text-blue-500">
+                                Forgot password?
+                            </a>
+                        </div>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                        <p class="mt-1 text-sm text-red-600">
+                            {% for error in form.password.errors %}
+                            {{ error }}
+                            {% endfor %}
+                        </p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-6">
+                        <button type="submit" class="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                            Sign in
+                        </button>
+                    </div>
+                    
+                    <input type="hidden" name="next" value="{{ request.GET.next }}">
+                </form>
+                
+                <div class="mt-4 text-center">
+                    <p class="text-sm text-gray-600">
+                        Don't have an account?
+                        <a href="{% url 'register' %}" class="font-medium text-blue-600 hover:text-blue-500">
+                            Sign up now
+                        </a>
+                    </p>
+                </div>
+            </div>
         </div>
-        {{ form.password|add_class:"form-input" }}
-        {% if form.password.errors %}
-          <p class="form-error">
-            {% for error in form.password.errors %}
-              {{ error }}
-            {% endfor %}
-          </p>
-        {% endif %}
-      </div>
-
-      <!-- Submit -->
-      <div>
-        <button type="submit" class="c360-btn-primary w-full py-2.5">Sign in</button>
-      </div>
-
-      <input type="hidden" name="next" value="{{ request.GET.next }}">
-    </form>
-
-    <!-- Sign-up Link -->
-    <div class="mt-5 text-center text-sm text-gray-600">
-      Don’t have an account?
-      <a href="{% url 'register' %}" class="text-primary-teal font-medium hover:underline">Sign up now</a>
+        
+        <div class="mt-8 text-center">
+            <p class="text-gray-500 text-sm">
+                By logging in, you agree to our
+                <a href="#" class="text-blue-600 hover:underline">Terms of Service</a>
+                and
+                <a href="#" class="text-blue-600 hover:underline">Privacy Policy</a>
+            </p>
+        </div>
     </div>
-  </div>
 </div>
 {% endblock %}

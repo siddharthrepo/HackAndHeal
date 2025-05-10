@@ -2,7 +2,7 @@ from django import forms
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.core.exceptions import ValidationError
 from .models import User, Profile, DoctorProfile
-from django.contrib.auth import get_user_model
+
 class CustomAuthenticationForm(AuthenticationForm):
     """Custom authentication form with styling."""
     username = forms.EmailField(
@@ -117,26 +117,6 @@ class DoctorProfileForm(forms.ModelForm):
         widget=forms.TextInput(attrs={'class': 'w-full px-4 py-2 border rounded-md', 'placeholder': 'Languages Spoken'})
     )
     
-User = get_user_model()
-
-class UserUpdateForm(forms.ModelForm):
-    class Meta:
-        model = User
-        fields = ['first_name', 'last_name', 'email']
-
-class ProfileForm(forms.ModelForm):
-    class Meta:
-        model = Profile
-        fields = ['phone_number', 'address', 'date_of_birth']
-
-class DoctorProfileForm(forms.ModelForm):
-    class Meta:
-        model = DoctorProfile
-        fields = [
-            'specialty', 'license_number', 'experience_years',
-            'consultation_fee', 'bio', 'education',
-            'hospital_affiliation', 'languages_spoken'
-        ]
     class Meta:
         model = DoctorProfile
         fields = ('specialty', 'license_number', 'experience_years', 'bio', 
