@@ -1,7 +1,3 @@
 
 .env
 venv/
-.venv/
-/.venv
-*.pyc
-_pycache_/

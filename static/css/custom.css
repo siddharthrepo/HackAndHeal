@@ -297,6 +297,3 @@ h1, h2, h3, h4, h5, h6 {
     height: 150px;
   }
 }
-.icon-circle {
-  @apply h-16 w-16 rounded-full bg-primary-teal flex items-center justify-center shadow-md;
-}
