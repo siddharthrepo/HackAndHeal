@@ -146,6 +146,9 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@chikitsa360.c
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
 RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
 
+# settings.py
+RAZORPAY_ENABLED = False  # Set to True when you're ready for real payments
+
 # Daily.co settings
 DAILY_API_KEY = os.environ.get('DAILY_API_KEY', '')
 
