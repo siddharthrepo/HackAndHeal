@@ -325,6 +325,8 @@ class AppointmentDetailView(LoginRequiredMixin, DetailView):
         except Payment.DoesNotExist:
             context['payment'] = None
         
+        context['is_doctor'] = self.request.user.is_doctor()
+        context['is_patient'] = self.request.user.is_patient()
         return context
 
 class JoinConsultationView(LoginRequiredMixin, View):
