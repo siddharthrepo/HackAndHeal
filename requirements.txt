@@ -10,5 +10,5 @@ deepgram-sdk
 openai
 pillow
 daphne
-django-widget-tweaksks
 django-environ
+django-widget-tweaks
