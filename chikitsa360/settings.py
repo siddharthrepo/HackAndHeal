@@ -210,9 +210,26 @@ if DEBUG:
     SESSION_COOKIE_SECURE = False
     CSRF_COOKIE_SECURE = False
 else:
-    SECURE_SSL_REDIRECT = True
-    SESSION_COOKIE_SECURE = True
-    CSRF_COOKIE_SECURE = True
+    SECURE_SSL_REDIRECT = True  # Redirect HTTP to HTTPS
+    SESSION_COOKIE_SECURE = True  # Only send session cookies over HTTPS
+    CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS
+
+    # HTTP Strict Transport Security
+
+    # Additional protections
+    SECURE_BROWSER_XSS_FILTER = True  # Enable XSS filter in the browser
+    SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent content-type sniffing
+
+    # Cookie policy
+    SESSION_COOKIE_SAMESITE = 'Lax'  # or 'Strict' if you don't need cross-site usage
+    CSRF_COOKIE_SAMESITE = 'Lax'
+
+    # Referrer Policy
+    SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+
+    # If using iframe embedding, control it here
+    X_FRAME_OPTIONS = 'DENY'
+
 
 
 # CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
