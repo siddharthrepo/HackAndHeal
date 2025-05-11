@@ -96,10 +96,12 @@ else:
 
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://0549-122-161-79-89.ngrok-free.app"
+    "https://helpless-trixy-siddharthrepo-de886f3f.koyeb.app",
 ]
 
-
+ROOT_URLCONF = 'chikitsa360.urls'
+WSGI_APPLICATION = 'chikitsa360.wsgi.application'
+ASGI_APPLICATION = 'chikitsa360.asgi.application'
 # Channel layers for WebSockets
 CHANNEL_LAYERS = {
     "default": {
@@ -203,9 +205,14 @@ DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', '')
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
 
 # Session settings
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = True
+if DEBUG:
+    SECURE_SSL_REDIRECT = False
+    SESSION_COOKIE_SECURE = False
+    CSRF_COOKIE_SECURE = False
+else:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
 
 
 # CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
