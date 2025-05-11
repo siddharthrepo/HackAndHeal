@@ -10,7 +10,7 @@
             Book Appointment with Dr. {{ doctor.get_full_name }}
         </h1>
         {% if doctor_profile %}
-        <p class="text-gray-600">{{ doctor_profile.specialty }}</p>
+        <p class="text-[var(--primary-teal)]">{{ doctor_profile.specialty }}</p>
         {% endif %}
     </div>
 
@@ -23,7 +23,11 @@
         </p>
         <p class="text-gray-700 mt-2">
             <strong>Consultation Fee:</strong>
-            {% if doctor_profile %}₹{{ doctor_profile.consultation_fee }}{% else %}Not available{% endif %}
+            {% if doctor_profile %}
+                <span class="text-[var(--primary-dark)] font-medium">₹{{ doctor_profile.consultation_fee }}</span>
+            {% else %}
+                <span class="text-red-600">Not available</span>
+            {% endif %}
         </p>
     </div>
 
@@ -44,7 +48,7 @@
         </div>
 
         <div class="pt-4 border-t border-gray-200 flex justify-end">
-            <button type="submit" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-md shadow">
+            <button type="submit" class="px-6 py-2 bg-[var(--primary-teal)] hover:bg-[var(--primary-dark)] text-white font-semibold rounded-md shadow transition-colors">
                 Confirm & Proceed to Payment
             </button>
         </div>

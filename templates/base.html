@@ -33,7 +33,7 @@
                     <!-- Logo -->
                     <div class="flex-shrink-0 flex items-center">
                         <a href="{% url 'home' %}" class="flex items-center">
-                            <img src="/static/images/chikitsa360-logo.svg" alt="Chikitsa360" class="c360-logo h-10">
+                            <img src="/static/images/chikitsa360-logo.png" alt="Chikitsa360" class="c360-logo h-10">
                         </a>
                     </div>
                     
@@ -199,166 +199,110 @@
         {% block content %}{% endblock %}
     </main>
     
-<!-- Main Call to Action -->
-<section class="c360-hero">
-  <div class="c360-hero-shape"></div>
-  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 c360-hero-content">
-    <div class="grid md:grid-cols-2 gap-10 items-center">
-      <div>
-        <h2 class="text-3xl md:text-4xl font-bold mb-4">
-          Ready to experience healthcare from anywhere?
-        </h2>
-        <p class="text-lg font-light">
-          Join thousands of patients who have already benefited from our secure and seamless telehealth platform.
-        </p>
-      </div>
-      <div class="flex md:justify-end">
-        <a href="{% url 'register' %}" class="c360-btn-secondary">
-          Get Started Now
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
+
 
 
     <!-- Footer -->
-    <footer class="bg-white mt-0 py-12">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                        <i class="fas fa-heart-pulse text-primary-teal mr-2"></i> 
-                        Telehealth Platform
-                    </h3>
-                    <p class="text-gray-600 mb-4">
-                        A secure, modular telehealth solution for accessing healthcare from anywhere. Connect with qualified providers, schedule appointments, and attend virtual consultations all in one place.
-                    </p>
-                    <div class="flex space-x-4 mt-4">
-                        <a href="#" class="text-primary-teal hover:text-primary-dark transition-colors">
-                            <i class="fab fa-facebook-f"></i>
-                        </a>
-                        <a href="#" class="text-primary-teal hover:text-primary-dark transition-colors">
-                            <i class="fab fa-twitter"></i>
-                        </a>
-                        <a href="#" class="text-primary-teal hover:text-primary-dark transition-colors">
-                            <i class="fab fa-linkedin-in"></i>
-                        </a>
-                        <a href="#" class="text-primary-teal hover:text-primary-dark transition-colors">
-                            <i class="fab fa-instagram"></i>
-                        </a>
-                    </div>
-                </div>
-                
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                        <i class="fas fa-link text-primary-teal mr-2"></i>
-                        Quick Links
-                    </h3>
-                    <ul class="space-y-2">
-                        <li>
-                            <a href="{% url 'home' %}" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
-                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Home
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'login' %}" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
-                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Login
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'register' %}" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
-                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Register as Patient
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'register' %}" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
-                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Register as Doctor
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                        <i class="fas fa-stethoscope text-primary-teal mr-2"></i>
-                        Services
-                    </h3>
-                    <ul class="space-y-2">
-                        <li>
-                            <a href="#" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
-                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Video Consultations
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
-                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Secure Messaging
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
-                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> E-Prescriptions
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
-                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Medical Records
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="text-gray-600 hover:text-primary-teal transition-colors flex items-center">
-                                <i class="fas fa-angle-right mr-2 text-xs text-primary-teal"></i> Follow-up Care
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-                
-                <div>
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-                        <i class="fas fa-envelope text-primary-teal mr-2"></i>
-                        Contact Us
-                    </h3>
-                    <ul class="space-y-2">
-                        <li class="flex items-start text-gray-600">
-                            <i class="fas fa-envelope text-primary-teal mr-2 mt-1"></i>
-                            <span>support@chikitsa360.com</span>
-                        </li>
-                        <li class="flex items-start text-gray-600">
-                            <i class="fas fa-phone text-primary-teal mr-2 mt-1"></i>
-                            <span>(123) 456-7890</span>
-                        </li>
-                        <li class="flex items-start text-gray-600">
-                            <i class="fas fa-map-marker-alt text-primary-teal mr-2 mt-1"></i>
-                            <span>123, Main Street, City, Country</span>
-                        </li>
-                        <li class="flex items-start text-gray-600">
-                            <i class="fas fa-clock text-primary-teal mr-2 mt-1"></i>
-                            <span>Mon-Fri: 8am - 8pm</span>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-            
-            <div class="border-t border-gray-200 mt-8 pt-8">
-                <div class="flex flex-col md:flex-row justify-between items-center">
-                    <p class="text-gray-500 text-sm mb-4 md:mb-0">
-                        &copy; {% now "Y" %} Chikitsa360: Healthcare! Everywhere! All rights reserved.
-                    </p>
-                    <div class="flex space-x-6">
-                        <a href="#" class="text-gray-500 hover:text-primary-teal text-sm transition-colors">
-                            Privacy Policy
-                        </a>
-                        <a href="#" class="text-gray-500 hover:text-primary-teal text-sm transition-colors">
-                            Terms of Service
-                        </a>
-                        <a href="#" class="text-gray-500 hover:text-primary-teal text-sm transition-colors">
-                            Contact Us
-                        </a>
-                    </div>
-                </div>
-            </div>
+    <footer class="bg-[var(--primary-dark)] text-white mt-0 py-12">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+      
+      <!-- Brand -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4 flex items-center">
+          <i class="fas fa-heart-pulse text-[var(--primary-light)] mr-2"></i> 
+          Telehealth Platform
+        </h3>
+        <p class="text-[var(--primary-light)] text-sm mb-4">
+          A secure, modular telehealth solution for accessing healthcare from anywhere.
+        </p>
+        <div class="flex space-x-4 mt-4">
+          <a href="#" class="text-[var(--primary-light)] hover:text-white transition-colors">
+            <i class="fab fa-facebook-f"></i>
+          </a>
+          <a href="#" class="text-[var(--primary-light)] hover:text-white transition-colors">
+            <i class="fab fa-twitter"></i>
+          </a>
+          <a href="#" class="text-[var(--primary-light)] hover:text-white transition-colors">
+            <i class="fab fa-linkedin-in"></i>
+          </a>
+          <a href="#" class="text-[var(--primary-light)] hover:text-white transition-colors">
+            <i class="fab fa-instagram"></i>
+          </a>
         </div>
-    </footer>
+      </div>
+
+      <!-- Quick Links -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4 flex items-center">
+          <i class="fas fa-link text-[var(--primary-light)] mr-2"></i> Quick Links
+        </h3>
+        <ul class="space-y-2 text-sm">
+          <li>
+            <a href="{% url 'home' %}" class="hover:text-[var(--primary-light)] flex items-center">
+              <i class="fas fa-angle-right mr-2 text-xs text-[var(--primary-light)]"></i> Home
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'login' %}" class="hover:text-[var(--primary-light)] flex items-center">
+              <i class="fas fa-angle-right mr-2 text-xs text-[var(--primary-light)]"></i> Login
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'register' %}" class="hover:text-[var(--primary-light)] flex items-center">
+              <i class="fas fa-angle-right mr-2 text-xs text-[var(--primary-light)]"></i> Register as Patient
+            </a>
+          </li>
+          <li>
+            <a href="{% url 'register' %}" class="hover:text-[var(--primary-light)] flex items-center">
+              <i class="fas fa-angle-right mr-2 text-xs text-[var(--primary-light)]"></i> Register as Doctor
+            </a>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Services -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4 flex items-center">
+          <i class="fas fa-stethoscope text-[var(--primary-light)] mr-2"></i> Services
+        </h3>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#" class="hover:text-[var(--primary-light)] flex items-center"><i class="fas fa-angle-right mr-2 text-xs text-[var(--primary-light)]"></i> Video Consultations</a></li>
+          <li><a href="#" class="hover:text-[var(--primary-light)] flex items-center"><i class="fas fa-angle-right mr-2 text-xs text-[var(--primary-light)]"></i> Secure Messaging</a></li>
+          <li><a href="#" class="hover:text-[var(--primary-light)] flex items-center"><i class="fas fa-angle-right mr-2 text-xs text-[var(--primary-light)]"></i> E-Prescriptions</a></li>
+          <li><a href="#" class="hover:text-[var(--primary-light)] flex items-center"><i class="fas fa-angle-right mr-2 text-xs text-[var(--primary-light)]"></i> Medical Records</a></li>
+          <li><a href="#" class="hover:text-[var(--primary-light)] flex items-center"><i class="fas fa-angle-right mr-2 text-xs text-[var(--primary-light)]"></i> Follow-up Care</a></li>
+        </ul>
+      </div>
+
+      <!-- Contact Info -->
+      <div>
+        <h3 class="text-lg font-semibold mb-4 flex items-center">
+          <i class="fas fa-envelope text-[var(--primary-light)] mr-2"></i> Contact Us
+        </h3>
+        <ul class="space-y-2 text-sm">
+          <li class="flex items-start"><i class="fas fa-envelope text-[var(--primary-light)] mr-2 mt-1"></i><span>support@chikitsa360.com</span></li>
+          <li class="flex items-start"><i class="fas fa-phone text-[var(--primary-light)] mr-2 mt-1"></i><span>(123) 456-7890</span></li>
+          <li class="flex items-start"><i class="fas fa-map-marker-alt text-[var(--primary-light)] mr-2 mt-1"></i><span>123, Main Street, City, Country</span></li>
+          <li class="flex items-start"><i class="fas fa-clock text-[var(--primary-light)] mr-2 mt-1"></i><span>Mon-Fri: 8am - 8pm</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Bottom Bar -->
+    <div class="border-t border-[var(--primary-light)] mt-8 pt-8 text-sm flex flex-col md:flex-row justify-between items-center">
+      <p class="text-[var(--primary-light)] mb-4 md:mb-0">
+        &copy; {% now "Y" %} Chikitsa360: Healthcare! Everywhere! All rights reserved.
+      </p>
+      <div class="flex space-x-6">
+        <a href="#" class="hover:text-white">Privacy Policy</a>
+        <a href="#" class="hover:text-white">Terms of Service</a>
+        <a href="#" class="hover:text-white">Contact Us</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
     
     <!-- jQuery (needed for some interactions) -->
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

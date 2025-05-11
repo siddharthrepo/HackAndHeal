@@ -2,12 +2,12 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.views import LoginView, LogoutView
-from django.views.generic import CreateView, UpdateView, DetailView, TemplateView
+from django.views.generic import CreateView, UpdateView, DetailView, TemplateView, View
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from django.http import HttpResponseRedirect
 from .models import User, Profile, DoctorProfile
-from .forms import UserRegistrationForm, ProfileForm, DoctorProfileForm, CustomAuthenticationForm
+from .forms import UserRegistrationForm, ProfileForm, DoctorProfileForm, CustomAuthenticationForm, UserUpdateForm
 from .mixins import PatientRequiredMixin, DoctorRequiredMixin, AdminRequiredMixin
 from django.contrib.auth import login, get_backends
 class CustomLoginView(LoginView):
@@ -28,6 +28,7 @@ class CustomLoginView(LoginView):
 class CustomLogoutView(LogoutView):
     """Custom logout view."""
     next_page = 'home'
+
 
 class RegisterView(CreateView):
     """View for user registration."""
@@ -70,7 +71,7 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
     """View for updating the user profile."""
     model = Profile
     form_class = ProfileForm
-    template_name = 'auth/update_profile.html'
+    template_name = 'auth/edit_profile.html'
     success_url = reverse_lazy('profile')
     
     def get_object(self, queryset=None):
@@ -153,53 +154,3 @@ class AdminDashboardView(LoginRequiredMixin, AdminRequiredMixin, TemplateView):
         
         # Additional context for admin dashboard can be added here
         return context
-
-from django.views.generic import View
-from django.shortcuts import render, redirect
-from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
-from .forms import UserUpdateForm, ProfileForm, DoctorProfileForm
-from .models import DoctorProfile
-
-class EditProfileView(LoginRequiredMixin, View):
-    """Allow users (and doctors) to update their profile details."""
-    
-    def get(self, request):
-        user_form = UserUpdateForm(instance=request.user)
-        profile_form = ProfileForm(instance=request.user.profile)
-        doctor_form = None
-
-        if request.user.is_doctor():
-            doctor_profile, _ = DoctorProfile.objects.get_or_create(user=request.user)
-            doctor_form = DoctorProfileForm(instance=doctor_profile)
-
-        return render(request, 'auth/edit_profile.html', {
-            'user_form': user_form,
-            'profile_form': profile_form,
-            'doctor_form': doctor_form
-        })
-
-    def post(self, request):
-        user_form = UserUpdateForm(request.POST, instance=request.user)
-        profile_form = ProfileForm(request.POST, instance=request.user.profile)
-        doctor_form = None
-
-        if request.user.is_doctor():
-            doctor_profile, _ = DoctorProfile.objects.get_or_create(user=request.user)
-            doctor_form = DoctorProfileForm(request.POST, instance=doctor_profile)
-
-        if user_form.is_valid() and profile_form.is_valid() and (doctor_form is None or doctor_form.is_valid()):
-            user_form.save()
-            profile_form.save()
-            if doctor_form:
-                doctor_form.save()
-            messages.success(request, "Your profile was updated successfully.")
-            return redirect('profile')
-        else:
-            messages.error(request, "Please correct the errors below.")
-
-        return render(request, 'auth/edit_profile.html', {
-            'user_form': user_form,
-            'profile_form': profile_form,
-            'doctor_form': doctor_form
-        })

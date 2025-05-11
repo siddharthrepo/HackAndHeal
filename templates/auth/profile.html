@@ -1,108 +1,46 @@
 {% extends "base.html" %}
-{% load static %}
-{% load widget_tweaks %}
 
-{% block title %}Edit Profile{% endblock %}
+{% block title %}My Profile - Chikitsa360{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-10 px-4">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6">Edit Profile</h2>
+<section class="bg-gradient-to-r from-[var(--primary-teal)] to-[var(--primary-dark)] py-10 text-white">
+  <div class="max-w-4xl mx-auto px-4">
+    <h1 class="text-3xl font-bold">My Profile</h1>
+    <p class="mt-2 text-[var(--primary-light)] text-sm">View your profile details below.</p>
+  </div>
+</section>
 
-    <form method="post" enctype="multipart/form-data" class="bg-white shadow rounded-lg p-6 space-y-8 border">
-        {% csrf_token %}
-
-        {% include "partials/form_errors.html" with form=user_form %}
-        {% include "partials/form_errors.html" with form=profile_form %}
-        {% if doctor_form %}
-            {% include "partials/form_errors.html" with form=doctor_form %}
-        {% endif %}
-
-        <!-- User Information -->
-        <div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Basic Information</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="first_name" class="form-label">First Name</label>
-                    {% render_field user_form.first_name class="form-input" %}
-                </div>
-                <div>
-                    <label for="last_name" class="form-label">Last Name</label>
-                    {% render_field user_form.last_name class="form-input" %}
-                </div>
-                <div class="md:col-span-2">
-                    <label for="email" class="form-label">Email</label>
-                    {% render_field user_form.email class="form-input" %}
-                </div>
-            </div>
+<section class="max-w-4xl mx-auto px-4 py-10">
+  <div class="c360-card p-6 border border-gray-200 space-y-6">
+    <!-- Profile Picture and Name -->
+    <div class="flex items-center space-x-6">
+      {% if profile.profile_picture %}
+        <img src="{{ profile.profile_picture }}" alt="Profile Picture" class="w-20 h-20 rounded-full object-cover border-2 border-[var(--primary-teal)] shadow-sm">
+      {% else %}
+        <div class="w-20 h-20 rounded-full bg-[var(--primary-light)] text-[var(--primary-teal)] flex items-center justify-center text-xl font-semibold shadow-sm">
+          {{ user.get_full_name|default:user.email|slice:":2"|upper }}
         </div>
+      {% endif %}
+      <div>
+        <h2 class="text-xl font-semibold text-gray-800">{{ user.get_full_name|default:user.email }}</h2>
+        <p class="text-sm text-gray-500">{{ user.email }}</p>
+        <p class="text-sm mt-1 text-[var(--primary-teal)] font-medium">{{ user.get_role_display }}</p>
+      </div>
+    </div>
 
-        <!-- Profile Information -->
-        <div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Profile Details</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="phone_number" class="form-label">Phone Number</label>
-                    {% render_field profile_form.phone_number class="form-input" %}
-                </div>
-                <div>
-                    <label for="date_of_birth" class="form-label">Date of Birth</label>
-                    {% render_field profile_form.date_of_birth class="form-input" %}
-                </div>
-                <div class="md:col-span-2">
-                    <label for="address" class="form-label">Address</label>
-                    {% render_field profile_form.address class="form-textarea" %}
-                </div>
-            </div>
-        </div>
+    <!-- Profile Details -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+      <p><span class="font-medium">Phone:</span> {{ profile.phone_number|default:"—" }}</p>
+      <p><span class="font-medium">Date of Birth:</span> {{ profile.date_of_birth|date:"F j, Y"|default:"—" }}</p>
+      <p class="md:col-span-2"><span class="font-medium">Address:</span> {{ profile.address|default:"—" }}</p>
+    </div>
 
-        {% if doctor_form %}
-        <!-- Doctor Information -->
-        <div>
-            <h3 class="text-lg font-semibold text-gray-800 mb-4">Doctor Profile</h3>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                    <label for="specialty" class="form-label">Specialty</label>
-                    {% render_field doctor_form.specialty class="form-input" %}
-                </div>
-                <div>
-                    <label for="license_number" class="form-label">License Number</label>
-                    {% render_field doctor_form.license_number class="form-input" %}
-                </div>
-                <div>
-                    <label for="experience_years" class="form-label">Years of Experience</label>
-                    {% render_field doctor_form.experience_years class="form-input" %}
-                </div>
-                <div>
-                    <label for="consultation_fee" class="form-label">Consultation Fee (INR)</label>
-                    {% render_field doctor_form.consultation_fee class="form-input" %}
-                </div>
-                <div class="md:col-span-2">
-                    <label for="languages_spoken" class="form-label">Languages Spoken</label>
-                    {% render_field doctor_form.languages_spoken class="form-input" %}
-                </div>
-                <div class="md:col-span-2">
-                    <label for="hospital_affiliation" class="form-label">Hospital Affiliation</label>
-                    {% render_field doctor_form.hospital_affiliation class="form-input" %}
-                </div>
-                <div class="md:col-span-2">
-                    <label for="bio" class="form-label">Professional Bio</label>
-                    {% render_field doctor_form.bio class="form-textarea" %}
-                </div>
-                <div class="md:col-span-2">
-                    <label for="education" class="form-label">Education</label>
-                    {% render_field doctor_form.education class="form-textarea" %}
-                </div>
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- Submit -->
-        <div class="pt-6 flex items-center space-x-4">
-            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">
-                Save Changes
-            </button>
-            <a href="{% url 'profile' %}" class="text-sm text-gray-600 hover:underline">Cancel</a>
-        </div>
-    </form>
-</div>
+    <!-- Edit Button -->
+    <div class="flex justify-end">
+      <a href="{% url 'edit_profile' %}" class="c360-btn-primary">
+        <i class="fas fa-user-edit mr-2"></i> Edit Profile
+      </a>
+    </div>
+  </div>
+</section>
 {% endblock %}
