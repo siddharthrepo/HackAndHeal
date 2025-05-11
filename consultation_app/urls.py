@@ -26,9 +26,4 @@ urlpatterns = [
     path('doctor/appointments/', DoctorAppointmentsView.as_view(), name='doctor_appointments'),
     path('appointment/<uuid:pk>/update-status/', UpdateAppointmentStatusView.as_view(), name='update_appointment_status'),
     path('appointment/<uuid:pk>/cancel/', CancelAppointmentView.as_view(), name='cancel_appointment'),
-    # Video call
-    # consultation_app/urls.py or your main urls.py
-    path('consultation/join/<uuid:pk>/', JoinConsultationView.as_view(), name='join_video_call'),
-
-
 ]
