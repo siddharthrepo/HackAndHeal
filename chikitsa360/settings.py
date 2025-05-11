@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'payment_app.apps.PaymentAppConfig',
     'chat_app.apps.ChatAppConfig',
     'transcription_app.apps.TranscriptionAppConfig',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [

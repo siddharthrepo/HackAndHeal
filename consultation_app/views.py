@@ -56,6 +56,31 @@ class HomeView(TemplateView):
         # Get featured health tips
         context['health_tips'] = HealthTip.objects.filter(is_featured=True).order_by('-created_at')[:3]
         
+        context['fallback_tips'] = [
+            {
+                'icon': 'fa-tint',
+                'title': 'Staying Hydrated: Why Water Matters',
+                'content': 'Drinking adequate water is essential for maintaining good health...',
+                'author': 'Dr. Amrita Singh',
+                'date': 'May 5, 2025'
+            },
+            {
+                'icon': 'fa-brain',
+                'title': 'Managing Stress in Daily Life',
+                'content': 'Chronic stress can affect your physical and mental health...',
+                'author': 'Dr. Rahul Verma',
+                'date': 'April 28, 2025'
+            },
+            {
+                'icon': 'fa-running',
+                'title': 'The Importance of Regular Exercise',
+                'content': 'Regular physical activity improves cardiovascular health...',
+                'author': 'Dr. Sanjay Mehta',
+                'date': 'April 15, 2025'
+            }
+        ]
+
+        
         return context
 
 class DoctorSearchView(ListView):

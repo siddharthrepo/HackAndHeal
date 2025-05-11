@@ -153,3 +153,53 @@ class AdminDashboardView(LoginRequiredMixin, AdminRequiredMixin, TemplateView):
         
         # Additional context for admin dashboard can be added here
         return context
+
+from django.views.generic import View
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .forms import UserUpdateForm, ProfileForm, DoctorProfileForm
+from .models import DoctorProfile
+
+class EditProfileView(LoginRequiredMixin, View):
+    """Allow users (and doctors) to update their profile details."""
+    
+    def get(self, request):
+        user_form = UserUpdateForm(instance=request.user)
+        profile_form = ProfileForm(instance=request.user.profile)
+        doctor_form = None
+
+        if request.user.is_doctor():
+            doctor_profile, _ = DoctorProfile.objects.get_or_create(user=request.user)
+            doctor_form = DoctorProfileForm(instance=doctor_profile)
+
+        return render(request, 'auth/edit_profile.html', {
+            'user_form': user_form,
+            'profile_form': profile_form,
+            'doctor_form': doctor_form
+        })
+
+    def post(self, request):
+        user_form = UserUpdateForm(request.POST, instance=request.user)
+        profile_form = ProfileForm(request.POST, instance=request.user.profile)
+        doctor_form = None
+
+        if request.user.is_doctor():
+            doctor_profile, _ = DoctorProfile.objects.get_or_create(user=request.user)
+            doctor_form = DoctorProfileForm(request.POST, instance=doctor_profile)
+
+        if user_form.is_valid() and profile_form.is_valid() and (doctor_form is None or doctor_form.is_valid()):
+            user_form.save()
+            profile_form.save()
+            if doctor_form:
+                doctor_form.save()
+            messages.success(request, "Your profile was updated successfully.")
+            return redirect('profile')
+        else:
+            messages.error(request, "Please correct the errors below.")
+
+        return render(request, 'auth/edit_profile.html', {
+            'user_form': user_form,
+            'profile_form': profile_form,
+            'doctor_form': doctor_form
+        })
