@@ -99,9 +99,12 @@
                                 <a href="{% url 'profile' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:bg-opacity-20 hover:text-primary-teal" role="menuitem">
                                     <i class="fas fa-user text-primary-teal mr-2"></i> Profile
                                 </a>
-                                <a href="{% url 'logout' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:bg-opacity-20 hover:text-primary-teal" role="menuitem">
-                                    <i class="fas fa-sign-out-alt text-primary-teal mr-2"></i> Sign out
-                                </a>
+                                <form method="post" action="{% url 'logout' %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-primary-light hover:bg-opacity-20 hover:text-primary-teal" role="menuitem">
+                                        <i class="fas fa-sign-out-alt text-primary-teal mr-2"></i> Sign out
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     {% else %}
