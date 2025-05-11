@@ -1,0 +1,110 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom components */
+.btn {
+  @apply px-4 py-2 rounded font-medium focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors;
+}
+
+.btn-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+}
+
+.btn-secondary {
+  @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500;
+}
+
+.btn-success {
+  @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+}
+
+.btn-danger {
+  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+}
+
+.card {
+  @apply bg-white rounded-lg shadow-md overflow-hidden border border-gray-200;
+}
+
+.form-input {
+  @apply w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+.form-label {
+  @apply block text-gray-700 font-medium mb-2;
+}
+
+.form-error {
+  @apply text-red-600 text-sm mt-1;
+}
+
+/* Healthcare specific styles */
+.doctor-card {
+  @apply bg-white rounded-lg shadow-md border border-gray-200 transition-transform hover:shadow-lg hover:-translate-y-1;
+}
+
+.availability-slot {
+  @apply bg-blue-50 border border-blue-200 rounded-md p-2 text-center cursor-pointer hover:bg-blue-100 transition-colors;
+}
+
+.availability-slot.booked {
+  @apply bg-gray-100 border-gray-200 cursor-not-allowed;
+}
+
+.status-badge {
+  @apply px-2 py-1 rounded-full text-xs font-semibold;
+}
+
+.status-confirmed {
+  @apply bg-green-100 text-green-800;
+}
+
+.status-requested {
+  @apply bg-yellow-100 text-yellow-800;
+}
+
+.status-completed {
+  @apply bg-blue-100 text-blue-800;
+}
+
+.status-cancelled {
+  @apply bg-red-100 text-red-800;
+}
+
+.message-bubble {
+  @apply rounded-lg p-3 max-w-xs;
+}
+
+.message-bubble.sent {
+  @apply bg-blue-500 text-white ml-auto;
+}
+
+.message-bubble.received {
+  @apply bg-gray-200 text-gray-800;
+}
+
+/* Healthcare color scheme */
+.text-brand {
+  @apply text-blue-600;
+}
+
+.bg-brand {
+  @apply bg-blue-600;
+}
+
+.border-brand {
+  @apply border-blue-600;
+}
+
+/* Responsive utilities */
+@media (max-width: 640px) {
+  .mobile-hidden {
+    @apply hidden;
+  }
+}
+
+/* Accessibility */
+.sr-only {
+  @apply absolute w-px h-px -m-px overflow-hidden whitespace-nowrap border-0 p-0;
+}

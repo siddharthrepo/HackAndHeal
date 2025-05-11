@@ -1,4 +1,6 @@
 {% extends 'base.html' %}
+{% load static %}
+
 
 {% block title %}Video Consultation - Chikitsa360{% endblock %}
 
@@ -141,60 +143,5 @@
 <script src="https://unpkg.com/@daily-co/daily-js"></script>
 
 <!-- Video Call JS -->
-<script src="/static/js/video.js"></script>
-
-<script>
-// Initialize chat functionality
-document.addEventListener('DOMContentLoaded', function() {
-    const chatForm = document.getElementById('chat-form');
-    const chatInput = document.getElementById('chat-input');
-    const chatMessages = document.getElementById('chat-messages');
-    
-    // Add support for Daily.co's built-in chat
-    chatForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-        const message = chatInput.value.trim();
-        
-        if (message && window.call) {
-            // Send message using Daily.co's sendAppMessage
-            window.call.sendAppMessage({ type: 'chat-message', message: message });
-            
-            // Display the message
-            const messageEl = document.createElement('div');
-            messageEl.className = 'flex justify-end mb-3';
-            messageEl.innerHTML = `
-                <div class="bg-blue-500 text-white rounded-lg py-2 px-3 max-w-xs">
-                    <p class="text-sm">${message}</p>
-                    <p class="text-xs text-blue-200 text-right mt-1">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                </div>
-            `;
-            chatMessages.appendChild(messageEl);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
-            
-            // Clear input
-            chatInput.value = '';
-        }
-    });
-    
-    // Listen for incoming chat messages
-    if (window.call) {
-        window.call.on('app-message', function(event) {
-            if (event.data.type === 'chat-message') {
-                const message = event.data.message;
-                const messageEl = document.createElement('div');
-                messageEl.className = 'flex justify-start mb-3';
-                messageEl.innerHTML = `
-                    <div class="bg-gray-200 rounded-lg py-2 px-3 max-w-xs">
-                        <p class="text-xs text-gray-600 mb-1">${event.fromId}</p>
-                        <p class="text-sm">${message}</p>
-                        <p class="text-xs text-gray-500 text-right mt-1">${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-                    </div>
-                `;
-                chatMessages.appendChild(messageEl);
-                chatMessages.scrollTop = chatMessages.scrollHeight;
-            }
-        });
-    }
-});
-</script>
+<script src="{% static 'js/video.js' %}"></script>
 {% endblock %}

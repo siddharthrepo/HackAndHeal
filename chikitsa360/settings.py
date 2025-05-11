@@ -1,12 +1,15 @@
 import os
 from pathlib import Path
-from dotenv import load_dotenv
+import environ
 
 # Load environment variables from .env file
-load_dotenv()
+env = environ.Env()
+# environ.Env.read_env()
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+env.read_env(os.path.join(BASE_DIR, ".env"), overwrite=True)
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-key-for-dev')
@@ -79,6 +82,10 @@ DATABASES = {
         'PORT': os.environ.get('PGPORT', '5432'),
     }
 }
+CSRF_TRUSTED_ORIGINS = [
+    "https://f768-122-161-79-89.ngrok-free.app"
+]
+
 
 # Channel layers for WebSockets
 CHANNEL_LAYERS = {
@@ -114,7 +121,9 @@ AUTHENTICATION_BACKENDS = [
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+# TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Kolkata'
+USE_TZ = True
 USE_I18N = True
 USE_TZ = True
 
@@ -134,13 +143,15 @@ LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Email settings
+SITE_ID = 1
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = os.environ.get('EMAIL_HOST', '')
-EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
-EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
-DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'noreply@chikitsa360.com')
+EMAIL_HOST = 'smtp.gmail.com'  # Replace with your SMTP host
+EMAIL_PORT = 587  # Common for TLS; use 465 for SSL
+EMAIL_USE_TLS = True  # Use True if using TLS
+EMAIL_USE_SSL = False  # Use False if using TLS
+EMAIL_HOST_USER = 'carzone1806@gmail.com'
+EMAIL_HOST_PASSWORD = 'onovdkxaixykyzef'
+EMAIL_TIMEOUT = 30  # Adjust as needed
 
 # Razorpay settings
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
@@ -150,6 +161,7 @@ RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
 RAZORPAY_ENABLED = False  # Set to True when you're ready for real payments
 
 # Daily.co settings
+# DAILY_API_KEY = env('DAILY_API_KEY')  # Retrieves the variable
 DAILY_API_KEY = os.environ.get('DAILY_API_KEY', '')
 
 # Deepgram settings

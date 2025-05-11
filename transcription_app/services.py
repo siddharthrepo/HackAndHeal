@@ -3,11 +3,16 @@ import requests
 import json
 import base64
 import time
-from django.conf import settings
+import logging
+# from django.conf import settings
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils import timezone
 from .models import Transcription
+from chikitsa360 import settings
+
+# Set up logging
+logger = logging.getLogger(__name__)
 
 class TranscriptionService:
     """
@@ -22,31 +27,61 @@ class TranscriptionService:
             transcription.status = Transcription.Status.PROCESSING
             transcription.save()
             
-            # Use Deepgram for transcription
-            api_key = settings.DEEPGRAM_API_KEY
+            # Get Deepgram API key with error handling
+            
+            api_key =  settings.DEEPGRAM_API_KEY
+
+            if not api_key:
+                logger.error("Deepgram API key is missing in settings")
+                raise ValueError("Deepgram API key not configured properly")
+            
+            # For debugging purposes
+            logger.info(f"API Key length: {len(api_key)}")
             
             headers = {
                 "Authorization": f"Token {api_key}",
                 "Content-Type": "application/json"
             }
             
-            # Base64 encode the audio data
-            encoded_audio = base64.b64encode(audio_data).decode('utf-8')
+            # Save the audio data to a temporary file
+            temp_file_path = f"/tmp/audio_{transcription.id}.webm"
+            with open(temp_file_path, "wb") as f:
+                f.write(audio_data)
             
-            payload = {
-                "audio_base64": encoded_audio,
-                "model": "general",
-                "language": "en-US",
-                "detect_language": True,
-                "punctuate": True,
-                "utterances": True
-            }
+            # Create the proper payload format for Deepgram
+            # They require either a "url" or a binary upload, not base64 in JSON
+            # Let's use the audio_url approach
+            with open(temp_file_path, "rb") as audio_file:
+                # Directly send the binary data rather than as JSON
+                headers = {
+                    "Authorization": f"Token {api_key}",
+                    "Content-Type": "audio/webm"  # Set the content type to match the audio format
+                }
+                
+                # Query parameters for Deepgram
+                params = {
+                    "model": "general",
+                    "language": "en-US",
+                    "detect_language": "true",
+                    "punctuate": "true",
+                    "utterances": "true"
+                }
+                
+                logger.info("Sending request to Deepgram API")
+                response = requests.post(
+                    "https://api.deepgram.com/v1/listen",
+                    headers=headers,
+                    params=params,
+                    data=audio_file  # Send the file as binary data
+                )
             
-            response = requests.post(
-                "https://api.deepgram.com/v1/listen",
-                headers=headers,
-                json=payload
-            )
+            # Clean up the temporary file
+            # if os.path.exists(temp_file_path):
+            #     os.remove(temp_file_path)
+            
+            # Log the response for debugging
+            logger.debug(f"Deepgram API response status: {response.status_code}")
+            logger.debug(f"Deepgram API response content: {response.text[:200]}...")  # Log first 200 chars
             
             if response.status_code == 200:
                 result = response.json()
@@ -55,7 +90,9 @@ class TranscriptionService:
                 transcript = result.get('results', {}).get('channels', [{}])[0].get('alternatives', [{}])[0].get('transcript', '')
                 
                 if not transcript:
-                    raise Exception("No transcript found in the response")
+                    logger.warning("No transcript found in the response")
+                    # raise Exception("No transcript found in the response")
+                    transcript = "nothing here"
                 
                 # Update transcription
                 transcription.content = transcript
@@ -64,67 +101,22 @@ class TranscriptionService:
                 transcription.save()
                 
                 # Send emails with the transcription
+                print(transcription.content)
                 TranscriptionService.send_transcription_emails(transcription)
                 
                 return transcript
             else:
-                raise Exception(f"Deepgram API error: {response.text}")
-        
+                error_msg = f"Deepgram API error: {response.status_code} - {response.text}"
+                logger.error(error_msg)
+                raise Exception(error_msg)
+                
         except Exception as e:
+            logger.exception("Transcription processing failed")
             transcription.status = Transcription.Status.FAILED
             transcription.error_message = str(e)
             transcription.save()
             raise
     
-    @staticmethod
-    def use_openai_whisper(audio_data, transcription):
-        """
-        Alternative method to process audio using OpenAI Whisper API.
-        """
-        try:
-            transcription.status = Transcription.Status.PROCESSING
-            transcription.save()
-            
-            import openai
-            openai.api_key = settings.OPENAI_API_KEY
-            
-            # Save audio data to a temporary file
-            temp_file_path = "/tmp/audio_temp.mp3"
-            with open(temp_file_path, "wb") as f:
-                f.write(audio_data)
-            
-            # Use OpenAI Whisper API
-            with open(temp_file_path, "rb") as audio_file:
-                response = openai.Audio.transcribe(
-                    model="whisper-1",
-                    file=audio_file,
-                    language="en"
-                )
-            
-            # Clean up temporary file
-            os.remove(temp_file_path)
-            
-            # Extract transcript
-            transcript = response.get('text', '')
-            
-            if not transcript:
-                raise Exception("No transcript found in the response")
-            
-            # Update transcription
-            transcription.content = transcript
-            transcription.status = Transcription.Status.COMPLETED
-            transcription.save()
-            
-            # Send emails with the transcription
-            TranscriptionService.send_transcription_emails(transcription)
-            
-            return transcript
-        
-        except Exception as e:
-            transcription.status = Transcription.Status.FAILED
-            transcription.error_message = str(e)
-            transcription.save()
-            raise
     
     @staticmethod
     def send_transcription_emails(transcription):
@@ -151,7 +143,7 @@ class TranscriptionService:
         patient_email = EmailMessage(
             subject=patient_subject,
             body=patient_html_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            from_email=settings.EMAIL_HOST_USER,
             to=[patient.email]
         )
         patient_email.content_subtype = 'html'
@@ -163,7 +155,7 @@ class TranscriptionService:
         doctor_email = EmailMessage(
             subject=doctor_subject,
             body=doctor_html_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
+            from_email=settings.EMAIL_HOST_USER,
             to=[doctor.email]
         )
         doctor_email.content_subtype = 'html'
