@@ -12,3 +12,4 @@ pillow
 daphne
 django-environ
 django-widget-tweaks
+gunicorn
