@@ -359,7 +359,7 @@
                 <img src="{{ tip.image_url }}" alt="{{ tip.title }}" class="w-full h-full object-cover">
               </div>
             {% else %}
-              <div class="h-48 flex items-center justify-center bg-gradient-to-r from-primary-light to-primary-teal">
+              <div class="h-48 flex items-center justify-center bg-gradient-to-r from-primary-teal to-primary-dark">
                 <div class="icon-circle">
                   <i class="fas fa-heartbeat text-white text-2xl"></i>
                 </div>
@@ -395,7 +395,7 @@
       {% else %}
   {% for tip in fallback_tips %}
       <div class="c360-card overflow-hidden animate-on-scroll opacity-0" data-animation="slide-up">
-        <div class="h-48 flex items-center justify-center bg-gradient-to-r from-primary-light to-primary-teal">
+        <div class="h-48 flex items-center justify-center bg-gradient-to-r from-[var(--primary-teal)] to-[var(--primary-dark)]">
           <div class="icon-circle">
             <i class="fas {{ tip.icon }} text-white text-2xl"></i>
           </div>
@@ -434,5 +434,26 @@
 
   </div>
 </div>
+<!-- Main Call to Action -->
+<section class="c360-hero">
+  <div class="c360-hero-shape"></div>
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 c360-hero-content">
+    <div class="grid md:grid-cols-2 gap-10 items-center">
+      <div>
+        <h2 class="text-3xl md:text-4xl font-bold mb-4">
+          Ready to experience healthcare from anywhere?
+        </h2>
+        <p class="text-lg font-light">
+          Join thousands of patients who have already benefited from our secure and seamless telehealth platform.
+        </p>
+      </div>
+      <div class="flex md:justify-end">
+        <a href="{% url 'register' %}" class="c360-btn-secondary">
+          Get Started Now
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
 
 {% endblock %}
