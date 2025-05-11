@@ -20,7 +20,22 @@
 > *"Quality healthcare shouldn't be limited by geography. Chikitsa360 bridges the gap between patients and doctors, ensuring everyone has access to medical expertise regardless of location."*
 
 <div align="center">
-  <img src="/api/placeholder/700/400" alt="Chikitsa360 Dashboard Preview" />
+  <table>
+    <tr>
+      <td align="center">
+        <img src="staticfiles/images/Screenshot 2025-05-12 000949.png" alt="Patient Dashboard" width="400px" />
+        <br />
+<!--         <em>Patient Dashboard View</em> -->
+      </td>
+      <tr>
+      <td align="center">
+        <img src="staticfiles/images/Screenshot 2025-05-12 001153.png" alt="Doctor Interface" width="400px" />
+        <br />
+<!--         <em>Doctor Consultation Interface</em> -->
+      </td>
+    </tr>
+    </tr>
+  </table>
 </div>
 
 ## 🌟 **Key Features**
@@ -28,7 +43,6 @@
 ### 👥 **User Experience**
 - **Intuitive Patient Portal** - Simple registration, medical history submission, and appointment booking
 - **Doctor Directory** - Search and filter doctors by specialty, availability, and languages spoken
-- **Smart Scheduling** - AI-powered appointment recommendations based on doctor availability and urgency
 - **Virtual Waiting Room** - Real-time updates on appointment status and estimated wait times
 - **Post-Consultation Summary** - Automated visit summaries with prescriptions and follow-up instructions
 
@@ -37,16 +51,14 @@
 - **Multi-participant Sessions** - Invite family members or specialists to join consultations
 - **Live Transcription** - Real-time conversation transcription using Deepgram API
 - **Screen Sharing** - Share test results, imaging, or educational materials
-- **Digital Prescription** - E-prescriptions sent directly to patient's preferred pharmacy
 - **Medical Records** - Secure storage and sharing of patient documents
 
 ### 🔒 **Security & Compliance**
 - **End-to-End Encryption** - Secure video and messaging communications
-- **PHI Protection** - HIPAA-compliant data storage and transmission
 - **Role-Based Access** - Granular permissions system for healthcare team members
 - **Audit Logging** - Comprehensive activity tracking for compliance purposes
 
-### 💳 **Payment & Billing**
+### 💳 **Payment & Billing (Under Development)**
 - **Transparent Pricing** - Clear fee structures displayed before booking
 - **Multiple Payment Options** - Credit/debit cards, digital wallets, and insurance processing
 - **Automated Receipts** - Instant payment confirmations and tax documentation
@@ -74,8 +86,8 @@ Chikitsa360/
 - **Video API**: Daily.co for WebRTC implementation
 - **Transcription**: Deepgram for real-time speech-to-text
 - **Payments**: Razorpay integration (in progress)
-- **Email**: SMTP integration for notifications
-- **Deployment**: Docker, Koyeb-ready
+- **Email**: SMTP integration for transcription mailing
+- **Deployment**: Koyeb-ready
 
 ## 🚀 **Installation & Setup**
 
@@ -142,13 +154,13 @@ Our solution directly addresses the Veersa Hackathon Use Case 2 requirements:
 
 1. ✅ **Instant access to health consultation** - Implemented through our intuitive user flow from registration to video consultation
 
-2. ✅ **Patient information capture** - Comprehensive intake forms with specialty selection and medical history
+2. ✅ **Patient information capture** - Comprehensive intake forms with specialty selection
 
 3. ✅ **Integrated payment system** - Secure payment processing before consultation using Razorpay 
 
 4. ✅ **Privacy protection for PHI data** - End-to-end encryption and secure storage of all patient data
 
-5. ✅ **In-app chat and information sharing** - Real-time messaging during consultation sessions
+5. ✅ **In-app chat and information sharing** - Use to share prescriptions and medical records
 
 6. ✅ **Transcription service for accent challenges** - Deepgram API integration for accurate transcription across accents and dialects
 
@@ -156,16 +168,11 @@ Our solution directly addresses the Veersa Hackathon Use Case 2 requirements:
 
 - **Live Application**: [https://chikitsa360.koyeb.app](https://chikitsa360.koyeb.app)
 - **Demo Video**: [Watch Project Demo](https://drive.google.com/file/d/1wqVfEuVkxP7hajtmYi1CWqQKUJ5nacaR/view?usp=sharing) <!-- 👈 Add your demo video link here -->
-- **Demo Credentials**:
-  - Patient: `patient@demo.com` / `patient123`
-  - Doctor: `doctor@demo.com` / `doctor123`
-  - Admin: `admin@demo.com` / `admin123`
 
 ## 🖼️ **UI/UX Design**
 
 - **Figma Design**: [View Figma Prototype](https://www.figma.com/design/3yNxgww0xoN4VcDLo6QY2X/home-2?node-id=0-1&t=JJlQkXj3MgVOuFPB-1) <!-- 👈 Add your Figma link here -->
 - **Design System**: Our interface follows Material Design principles with a custom healthcare-focused color palette
-- **Accessibility**: WCAG 2.1 AA compliant with full keyboard navigation support
 
 ## 🏛️ **Information Architecture**
 
@@ -189,9 +196,7 @@ Chikitsa360
 ├── Patient Portal
 │   ├── Dashboard
 │   ├── My Profile
-│   │   ├── Personal Information
-│   │   ├── Medical History
-│   │   └── Insurance Details
+│   │   └── Personal Information
 │   ├── Appointments
 │   │   ├── Upcoming
 │   │   ├── Past
@@ -200,9 +205,6 @@ Chikitsa360
 │   │   ├── Join Video Call
 │   │   ├── Chat History
 │   │   └── Transcripts
-│   ├── Medical Records
-│   ├── Prescriptions
-│   ├── Billing & Payments
 │   └── Help & Support
 │
 ├── Doctor Portal
@@ -216,12 +218,9 @@ Chikitsa360
 │   │   ├── Today's Schedule
 │   │   ├── Upcoming
 │   │   └── Past
-│   ├── Consultations
-│   │   ├── Start Video Call
-│   │   └── Patient History
-│   ├── Prescriptions & Notes
-│   └── Earnings & Reports
-│
+│   └── Consultations
+│       └── Start Video Call
+|
 └── Admin Panel
     ├── User Management
     ├── Doctor Verification
@@ -234,21 +233,6 @@ Chikitsa360
 
 The architecture ensures that users can quickly locate needed information with minimal clicks, following a logical flow from registration through consultation and follow-up care.
 
-## 🧪 **Testing**
-
-### Automated Tests
-```bash
-# Run all tests
-python manage.py test
-
-# Run specific test modules
-python manage.py test accounts
-python manage.py test consultation
-```
-
-### API Testing
-We've included Postman collections for API testing in the `/docs` directory.
-
 ## 🔮 **Future Enhancements**
 
 - **AI-Powered Symptom Assessment** - Pre-consultation symptom checking
@@ -260,9 +244,9 @@ We've included Postman collections for API testing in the `/docs` directory.
 ## 👨‍💻 **Team Members**
 
 - **Siddharth Raturi** - Full Stack Development & Project Lead
-- **Stuti Sharma** - UI/UX Design & Frontend Implementation
-- **Sona Poddar** - Backend Development & API Integration
-- **Vidhi Jain** - Testing & Quality Assurance
+- **Stuti Sharma** - Full Stack Development
+- **Sona Poddar** - Full Stack Development
+- **Vidhi Jain** - UI/UX Design & Documentation
 
 ## 📜 **License**
 
@@ -272,5 +256,5 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 <div align="center">
   <p>Made with ❤️ for the Veersa Hackathon 2026</p>
-  <p>© 2025 Team Code Healers | ABES College Batch of 2026</p>
+  <p>© 2025 Team HackAndHeal | ABES College Batch of 2026</p>
 </div>
