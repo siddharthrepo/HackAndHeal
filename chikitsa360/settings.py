@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import environ
+import dj_database_url
 
 # Load environment variables from .env file
 env = environ.Env()
@@ -73,16 +74,24 @@ WSGI_APPLICATION = 'chikitsa360.wsgi.application'
 ASGI_APPLICATION = 'chikitsa360.asgi.application'
 
 # Database
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('PGDATABASE', 'chikitsa360'),
-        'USER': os.environ.get('PGUSER', 'postgres'),
-        'PASSWORD': os.environ.get('PGPASSWORD', ''),
-        'HOST': os.environ.get('PGHOST', 'localhost'),
-        'PORT': os.environ.get('PGPORT', '5432'),
+DEBUG = os.getenv("DEBUG", "True") == "True"
+if DEBUG:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.environ.get('PGDATABASE', 'chikitsa360'),
+            'USER': os.environ.get('PGUSER', 'postgres'),
+            'PASSWORD': os.environ.get('PGPASSWORD', ''),
+            'HOST': os.environ.get('PGHOST', 'localhost'),
+            'PORT': os.environ.get('PGPORT', '5432'),
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+    }
+
+
 CSRF_TRUSTED_ORIGINS = [
     "https://f768-122-161-79-89.ngrok-free.app"
 ]

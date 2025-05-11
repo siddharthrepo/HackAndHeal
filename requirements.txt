@@ -13,3 +13,4 @@ daphne
 django-environ
 django-widget-tweaks
 gunicorn
+dj-database-url
