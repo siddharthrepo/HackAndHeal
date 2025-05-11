@@ -1,6 +1,6 @@
 /**
  * Video consultation functionality for Chikitsa360
- * Integrates Daily.co WebRTC for video calls
+ * Integrates Daily.co WebRTC for video calls with enhanced audio recording
  */
 
 // Initialize variables
@@ -14,9 +14,22 @@ let isRecording = false;
 let callStartTime = null;
 let callTimer = null;
 let transcriptionInProgress = false;
+let recordingStarted = false; // Flag to track if recording has started
+let participantCount = 0; // Track number of participants
 
 // DOM Elements
-document.addEventListener('DOMContentLoaded', function() {
+console.log("✅ video.js has been loaded");
+
+// Wait for DOM to be fully loaded
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM ready, initializing video consultation...");
+    initializeVideoConsultation();
+});
+
+// Main initialization function that will be called when DOM is ready
+function initializeVideoConsultation() {
+    console.log("✅ DOM fully loaded - starting initialization");
+
     const videoContainer = document.getElementById('video-container');
     const localVideo = document.getElementById('local-video');
     const remoteVideo = document.getElementById('remote-video');
@@ -30,20 +43,58 @@ document.addEventListener('DOMContentLoaded', function() {
     const transcribeBtn = document.getElementById('transcribe-btn');
     const loadingIndicator = document.getElementById('loading-indicator');
     const patientInfoPanel = document.getElementById('patient-info-panel');
-    const roomName = document.getElementById('room-name').value;
-    const token = document.getElementById('room-token').value;
-    const appointmentId = document.getElementById('appointment-id').value;
+    
+    // Get critical values and log them
+    const roomName = document.getElementById('room-name')?.value;
+    const token = document.getElementById('room-token')?.value;
+    const appointmentId = document.getElementById('appointment-id')?.value;
+
+    console.log("videoContainer:", videoContainer);
+    console.log("roomName:", roomName);
+    console.log("token:", token ? "Token present (hidden for security)" : "Token missing");
+    console.log("appointmentId:", appointmentId);
+
+    // Check for required elements before proceeding
+    if (!videoContainer) console.warn("⚠️ videoContainer is missing or null");
+    if (!roomName) console.warn("⚠️ roomName is missing or undefined");
+    if (!token) console.warn("⚠️ token is missing or undefined");
+
+    // Initialize chat functionality
+    initializeChat();
+
+    // Attach event listeners to UI elements
+    if (endCallBtn) {
+        endCallBtn.addEventListener('click', endCall);
+    }
+    
+    if (muteAudioBtn) {
+        muteAudioBtn.addEventListener('click', toggleAudio);
+    }
+    
+    if (muteVideoBtn) {
+        muteVideoBtn.addEventListener('click', toggleVideo);
+    }
+
+    // Initialize call automatically
+    initializeCall();
 
     /**
      * Initialize the Daily.co call
      */
     async function initializeCall() {
+        console.log("📞 Initializing call")
         try {
-            updateCallStatus('Initializing call...');
-            
-            // Create Daily.co call object
-            call = DailyIframe.createFrame({
-                showLeaveButton: false,
+            updateCallStatus('🔄 Initializing call...');
+
+            if (!videoContainer) {
+                displayError('❌ videoContainer is not defined or not found in the DOM.');
+                return;
+            }
+
+            // Create Daily.co call object and assign to global window
+            console.log("Creating Daily.co frame with target:", videoContainer);
+            window.call = DailyIframe.createFrame(videoContainer, {
+                showLeaveButton: true,
                 iframeStyle: {
                     position: 'absolute',
                     top: 0,
@@ -52,12 +103,13 @@ document.addEventListener('DOMContentLoaded', function() {
                     height: '100%',
                     border: 'none',
                     backgroundColor: 'transparent'
-                }
+                },
             });
-            
-            // Add call frame to container
-            videoContainer.appendChild(call.iframe);
-            
+
+            call = window.call;
+
+            console.log("✅ Daily call frame created:", call);
+
             // Set up event listeners
             call.on('joined-meeting', handleJoinedMeeting);
             call.on('left-meeting', handleLeftMeeting);
@@ -65,46 +117,66 @@ document.addEventListener('DOMContentLoaded', function() {
             call.on('participant-left', handleParticipantLeft);
             call.on('error', handleCallError);
             
-            // Join the call if token and room name are available
-            if (token && roomName) {
-                joinCall();
+            // Setup chat message handler if available
+            if (window.setupChatMessageHandler) {
+                window.setupChatMessageHandler();
             }
             
+            console.log("✅ Call event listeners registered");
+
+            // Attempt to join the call
+            if (token && roomName) {
+                console.log(`🔐 Joining room "${roomName}" with token...`);
+                try {
+                    await joinCall();
+                } catch (err) {
+                    displayError("❌ Error during joinCall: " + err.message);
+                    console.error("Full join error:", err);
+                }
+            } else {
+                displayError("❌ Missing token or room name. Cannot join call.");
+                console.warn("token present:", !!token, "roomName:", roomName);
+            }
+
         } catch (error) {
-            displayError('Failed to initialize call: ' + error.message);
+            displayError('❌ Failed to initialize call: ' + error.message);
+            console.error("Full initialization error:", error);
         }
     }
+
     
     /**
      * Join the Daily.co call
      */
     async function joinCall() {
         try {
+            console.log("🚀 Attempting to join room:", roomName);
             updateCallStatus('Joining call...');
             
-            // If audio recording was previously enabled, set up recording
-            setupAudioRecording();
-            
             // Join the meeting with token
+            console.log("🔑 Joining with token...");
             await call.join({
                 url: `https://chikitsa360.daily.co/${roomName}`,
                 token: token
             });
             
+            console.log("✅ Successfully joined the call");
+            
             // Show call controls
             document.getElementById('call-controls').classList.remove('hidden');
             
-            // Hide join button
+            // Hide join button if it exists
             if (joinBtn) joinBtn.classList.add('hidden');
             
             // Show end call button
-            endCallBtn.classList.remove('hidden');
+            if (endCallBtn) endCallBtn.classList.remove('hidden');
             
             isCallActive = true;
             startCallTimer();
             
         } catch (error) {
             displayError('Failed to join call: ' + error.message);
+            console.error("Full join error:", error);
         }
     }
     
@@ -113,39 +185,52 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     async function endCall() {
         try {
-            if (!isCallActive) return;
+            console.log("📴 Ending call...");
+            if (!isCallActive) {
+                console.log("Call not active, nothing to end");
+                return;
+            }
             
             updateCallStatus('Ending call...');
             
             // Stop timer
             stopCallTimer();
             
-            // Stop recording if active
+            // Stop recording if active and trigger upload
             if (isRecording) {
+                console.log("🛑 Stopping recording during endCall");
                 stopRecording();
+                console.log("🔄 Creating audio blob for upload");
+                if (audioChunks.length > 0) {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                    console.log("📤 Submitting audio for transcription");
+                    submitTranscription(audioBlob);
+                } else {
+                    console.log("⚠️ No audio chunks available for transcription");
+                }
             }
             
             // Leave the meeting
+            console.log("👋 Leaving the Daily.co meeting");
             await call.leave();
-            
-            // Remove call frame
-            if (call && call.iframe) {
-                videoContainer.removeChild(call.iframe);
-            }
             
             // Reset call object
             call = null;
             isCallActive = false;
+            participantCount = 0;
+            recordingStarted = false; // Reset recording started flag
             
             // Update UI
+            console.log("🔄 Updating UI after call end");
             document.getElementById('call-controls').classList.add('hidden');
-            endCallBtn.classList.add('hidden');
+            if (endCallBtn) endCallBtn.classList.add('hidden');
             if (joinBtn) joinBtn.classList.remove('hidden');
             
             updateCallStatus('Call ended');
             
         } catch (error) {
             displayError('Error ending call: ' + error.message);
+            console.error("Full end call error:", error);
         }
     }
     
@@ -156,6 +241,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!call) return;
         
         const audioState = call.participants().local.audio;
+        console.log("🎤 Toggling audio:", audioState ? "OFF" : "ON");
         call.setLocalAudio(!audioState);
         
         // Update button UI
@@ -177,6 +263,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!call) return;
         
         const videoState = call.participants().local.video;
+        console.log("📹 Toggling video:", videoState ? "OFF" : "ON");
         call.setLocalVideo(!videoState);
         
         // Update button UI
@@ -195,18 +282,51 @@ document.addEventListener('DOMContentLoaded', function() {
      * Handle joined meeting event
      */
     function handleJoinedMeeting(event) {
+        console.log("🎉 JOINED MEETING EVENT:", event);
         updateCallStatus('Connected');
-        startRecording();
+        participantCount++;
+        console.log(`👥 Current participant count: ${participantCount}`);
+        
+        // Start recording when user joins
+        console.log("📼 Starting recording after join");
+        if (!recordingStarted) {
+            startRecording();
+        } else {
+            console.log("⚠️ Recording already started previously");
+        }
     }
     
     /**
      * Handle left meeting event
      */
     function handleLeftMeeting(event) {
+        console.log("👋 LEFT MEETING EVENT:", event);
         updateCallStatus('Disconnected');
         stopCallTimer();
+        
+        // Stop recording and submit for transcription when user leaves
         if (isRecording) {
+            console.log("🛑 Stopping recording after user left");
             stopRecording();
+            
+            // Create blob and submit for transcription
+            console.log("🔄 Creating audio blob for upload after leaving");
+            if (audioChunks.length > 0) {
+                const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                console.log("📤 Submitting audio for transcription after leaving");
+                submitTranscription(audioBlob);
+            } else {
+                console.log("⚠️ No audio chunks available for transcription");
+            }
+        } else {
+            console.log("⚠️ Recording was not active when call ended");
+            
+            // If we have audio chunks but recording flag is false, try to create a blob anyway
+            if (audioChunks.length > 0) {
+                console.log("🔄 Found audio chunks despite recording not being active, attempting to process");
+                const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
+                submitTranscription(audioBlob);
+            }
         }
     }
     
@@ -214,7 +334,10 @@ document.addEventListener('DOMContentLoaded', function() {
      * Handle participant joined event
      */
     function handleParticipantJoined(event) {
+        console.log("👋 PARTICIPANT JOINED EVENT:", event);
         const participant = event.participant;
+        participantCount++;
+        console.log(`👥 Current participant count: ${participantCount}`);
         updateCallStatus('Connected with ' + (participant.user_name || 'another participant'));
     }
     
@@ -222,222 +345,40 @@ document.addEventListener('DOMContentLoaded', function() {
      * Handle participant left event
      */
     function handleParticipantLeft(event) {
-        updateCallStatus('Other participant left the call');
+        console.log("👋 PARTICIPANT LEFT EVENT:", event);
+        participantCount--;
+        console.log(`👥 Current participant count: ${participantCount}`);
+        
+        if (participantCount <= 1) {
+            updateCallStatus('Waiting for others to join...');
+        }
     }
     
     /**
      * Handle call errors
      */
-    function handleCallError(event) {
-        displayError('Call error: ' + event.errorMsg);
+    function handleCallError(error) {
+        console.error("❌ CALL ERROR:", error);
+        displayError('Call error: ' + error.errorMsg);
     }
     
     /**
-     * Set up audio recording using MediaRecorder
-     */
-    function setupAudioRecording() {
-        // Check if MediaRecorder is supported
-        if (!window.MediaRecorder) {
-            displayError('MediaRecorder not supported in this browser');
-            return;
-        }
-        
-        // Reset recording state
-        audioChunks = [];
-        isRecording = false;
-        
-        // Enable transcribe button if recording is possible
-        if (transcribeBtn) {
-            transcribeBtn.disabled = false;
-        }
-    }
-    
-    /**
-     * Start audio recording
-     */
-    function startRecording() {
-        if (!call || isRecording) return;
-        
-        try {
-            // Get audio stream from call
-            navigator.mediaDevices.getUserMedia({ audio: true, video: false })
-                .then(stream => {
-                    localStream = stream;
-                    audioRecorder = new MediaRecorder(stream);
-                    
-                    audioRecorder.ondataavailable = (event) => {
-                        if (event.data.size > 0) {
-                            audioChunks.push(event.data);
-                        }
-                    };
-                    
-                    audioRecorder.onstop = () => {
-                        const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                        if (transcribeBtn && transcribeBtn.dataset.autoTranscribe === 'true') {
-                            submitTranscription(audioBlob);
-                        }
-                    };
-                    
-                    // Start recording
-                    audioRecorder.start(1000);
-                    isRecording = true;
-                    
-                    // Update UI
-                    if (transcribeBtn) {
-                        transcribeBtn.textContent = 'Transcribe Call (Recording...)';
-                        transcribeBtn.classList.add('bg-red-600');
-                        transcribeBtn.classList.remove('bg-blue-600');
-                    }
-                })
-                .catch(error => {
-                    displayError('Error accessing microphone: ' + error.message);
-                });
-                
-        } catch (error) {
-            displayError('Failed to start recording: ' + error.message);
-        }
-    }
-    
-    /**
-     * Stop audio recording
-     */
-    function stopRecording() {
-        if (!audioRecorder || !isRecording) return;
-        
-        try {
-            audioRecorder.stop();
-            isRecording = false;
-            
-            // Stop all tracks in the stream
-            if (localStream) {
-                localStream.getTracks().forEach(track => track.stop());
-            }
-            
-            // Update UI
-            if (transcribeBtn) {
-                transcribeBtn.textContent = 'Transcribe Call';
-                transcribeBtn.classList.remove('bg-red-600');
-                transcribeBtn.classList.add('bg-blue-600');
-            }
-            
-        } catch (error) {
-            displayError('Failed to stop recording: ' + error.message);
-        }
-    }
-    
-    /**
-     * Submit audio for transcription
-     */
-    function submitTranscription(audioBlob) {
-        if (transcriptionInProgress) return;
-        
-        try {
-            transcriptionInProgress = true;
-            
-            // Show loading indicator
-            if (loadingIndicator) {
-                loadingIndicator.classList.remove('hidden');
-            }
-            
-            // Create form data with audio blob
-            const formData = new FormData();
-            formData.append('audio_data', audioBlob, 'recording.mp3');
-            
-            // Get CSRF token
-            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-            
-            // Submit transcription request
-            fetch(`/transcription/create/${appointmentId}/`, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': csrftoken
-                },
-                body: formData
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Monitor transcription status
-                    monitorTranscriptionStatus(data.transcription_id);
-                } else {
-                    throw new Error(data.error || 'Failed to start transcription');
-                }
-            })
-            .catch(error => {
-                transcriptionInProgress = false;
-                if (loadingIndicator) {
-                    loadingIndicator.classList.add('hidden');
-                }
-                displayError('Transcription error: ' + error.message);
-            });
-            
-        } catch (error) {
-            transcriptionInProgress = false;
-            if (loadingIndicator) {
-                loadingIndicator.classList.add('hidden');
-            }
-            displayError('Failed to submit transcription: ' + error.message);
-        }
-    }
-    
-    /**
-     * Monitor transcription status
-     */
-    function monitorTranscriptionStatus(transcriptionId) {
-        const statusCheckInterval = setInterval(() => {
-            fetch(`/transcription/status/${transcriptionId}/`, {
-                method: 'GET'
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.completed) {
-                    clearInterval(statusCheckInterval);
-                    transcriptionInProgress = false;
-                    
-                    // Hide loading indicator
-                    if (loadingIndicator) {
-                        loadingIndicator.classList.add('hidden');
-                    }
-                    
-                    // Show success message
-                    showNotification('Transcription completed and sent via email!', 'success');
-                    
-                    // Redirect to transcription detail page
-                    window.location.href = `/transcription/detail/${transcriptionId}/`;
-                    
-                } else if (data.failed) {
-                    clearInterval(statusCheckInterval);
-                    transcriptionInProgress = false;
-                    
-                    // Hide loading indicator
-                    if (loadingIndicator) {
-                        loadingIndicator.classList.add('hidden');
-                    }
-                    
-                    // Show error message
-                    displayError('Transcription failed: ' + (data.error_message || 'Unknown error'));
-                }
-            })
-            .catch(error => {
-                clearInterval(statusCheckInterval);
-                transcriptionInProgress = false;
-                
-                // Hide loading indicator
-                if (loadingIndicator) {
-                    loadingIndicator.classList.add('hidden');
-                }
-                
-                displayError('Failed to check transcription status: ' + error.message);
-            });
-        }, 5000); // Check every 5 seconds
-    }
-    
-    /**
-     * Update call status display
+     * Update call status UI
      */
     function updateCallStatus(status) {
+        console.log("📊 Call status:", status);
         if (callStatusIndicator) {
             callStatusIndicator.textContent = status;
+            
+            // Update status colors
+            callStatusIndicator.classList.remove('bg-green-600', 'bg-red-600', 'bg-yellow-500');
+            if (status.includes('Connected')) {
+                callStatusIndicator.classList.add('bg-green-600');
+            } else if (status.includes('Disconnected') || status.includes('Error') || status.includes('Failed')) {
+                callStatusIndicator.classList.add('bg-red-600');
+            } else {
+                callStatusIndicator.classList.add('bg-yellow-500');
+            }
         }
     }
     
@@ -445,16 +386,36 @@ document.addEventListener('DOMContentLoaded', function() {
      * Display error message
      */
     function displayError(message) {
+        console.error("❌ ERROR:", message);
         if (errorDisplay) {
             errorDisplay.textContent = message;
             errorDisplay.classList.remove('hidden');
+            errorDisplay.classList.remove('text-green-500');
+            errorDisplay.classList.add('text-red-400');
             
-            // Hide after 5 seconds
+            // Auto-hide after 5 seconds
             setTimeout(() => {
                 errorDisplay.classList.add('hidden');
             }, 5000);
         }
-        console.error(message);
+    }
+    
+    /**
+     * Display success message
+     */
+    function displaySuccess(message) {
+        console.log("✅ SUCCESS:", message);
+        if (errorDisplay) {
+            errorDisplay.textContent = message;
+            errorDisplay.classList.remove('hidden');
+            errorDisplay.classList.remove('text-red-400');
+            errorDisplay.classList.add('text-green-500');
+            
+            // Auto-hide after 5 seconds
+            setTimeout(() => {
+                errorDisplay.classList.add('hidden');
+            }, 5000);
+        }
     }
     
     /**
@@ -462,23 +423,21 @@ document.addEventListener('DOMContentLoaded', function() {
      */
     function startCallTimer() {
         callStartTime = new Date();
-        callTimer = setInterval(updateCallDuration, 1000);
-        updateCallDuration();
-    }
-    
-    /**
-     * Update call duration display
-     */
-    function updateCallDuration() {
-        if (!callDuration || !callStartTime) return;
         
-        const now = new Date();
-        const diff = now - callStartTime;
-        const seconds = Math.floor(diff / 1000) % 60;
-        const minutes = Math.floor(diff / (1000 * 60)) % 60;
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        
-        callDuration.textContent = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        // Update timer display every second
+        callTimer = setInterval(() => {
+            if (!callDuration) return;
+            
+            const now = new Date();
+            const diff = now - callStartTime;
+            
+            // Format time as HH:MM:SS
+            const hours = Math.floor(diff / 3600000).toString().padStart(2, '0');
+            const minutes = Math.floor((diff % 3600000) / 60000).toString().padStart(2, '0');
+            const seconds = Math.floor((diff % 60000) / 1000).toString().padStart(2, '0');
+            
+            callDuration.textContent = `${hours}:${minutes}:${seconds}`;
+        }, 1000);
     }
     
     /**
@@ -492,66 +451,255 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     /**
-     * Display a notification message
+     * Start audio recording
      */
-    function showNotification(message, type = 'info') {
-        const notification = document.createElement('div');
-        notification.className = `fixed top-4 right-4 p-4 rounded-md shadow-md z-50 ${
-            type === 'success' ? 'bg-green-500' : 
-            type === 'error' ? 'bg-red-500' : 
-            type === 'warning' ? 'bg-yellow-500' : 'bg-blue-500'
-        } text-white`;
+    function startRecording() {
+        if (isRecording) {
+            console.log("⚠️ Recording already in progress, not starting again");
+            return;
+        }
         
-        notification.textContent = message;
-        document.body.appendChild(notification);
+        console.log("🎙️ Starting audio recording");
         
-        // Remove after 5 seconds
-        setTimeout(() => {
-            notification.classList.add('opacity-0', 'transition-opacity', 'duration-500');
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 500);
-        }, 5000);
+        // Reset audio chunks array only if we haven't started recording before
+        if (!recordingStarted) {
+            audioChunks = [];
+        }
+        
+        try {
+            // Access user's audio stream
+            navigator.mediaDevices.getUserMedia({ audio: true })
+                .then(stream => {
+                    localStream = stream;
+                    
+                    // Create MediaRecorder instance
+                    audioRecorder = new MediaRecorder(stream);
+                    
+                    // Handle data available event
+                    audioRecorder.ondataavailable = (event) => {
+                        if (event.data && event.data.size > 0) {
+                            console.log(`🎵 Audio data available: ${event.data.size} bytes`);
+                            audioChunks.push(event.data);
+                        }
+                    };
+                    
+                    // Handle recording stop event
+                    audioRecorder.onstop = () => {
+                        console.log("🛑 Audio recorder stopped");
+                        
+                        // Stop all audio tracks
+                        if (localStream) {
+                            localStream.getAudioTracks().forEach(track => {
+                                track.stop();
+                                console.log("🔇 Audio track stopped");
+                            });
+                        }
+                        
+                        // Reset stream but keep audioChunks for transcription
+                        localStream = null;
+                    };
+                    
+                    // Start recording with 1 second time slices
+                    audioRecorder.start(1000);
+                    isRecording = true;
+                    recordingStarted = true;
+                    console.log("✅ Audio recording started");
+                })
+                .catch(error => {
+                    console.error("❌ Failed to start recording:", error);
+                    displayError("Failed to start recording: " + error.message);
+                });
+        } catch (error) {
+            console.error("❌ Error during recording setup:", error);
+            displayError("Recording error: " + error.message);
+        }
     }
     
-    // Initialize UI event listeners
-    if (joinBtn) {
-        joinBtn.addEventListener('click', joinCall);
-    }
-    
-    if (endCallBtn) {
-        endCallBtn.addEventListener('click', endCall);
-    }
-    
-    if (muteAudioBtn) {
-        muteAudioBtn.addEventListener('click', toggleAudio);
-    }
-    
-    if (muteVideoBtn) {
-        muteVideoBtn.addEventListener('click', toggleVideo);
-    }
-    
-    if (transcribeBtn) {
-        transcribeBtn.addEventListener('click', function() {
-            if (isRecording) {
-                stopRecording();
-                const audioBlob = new Blob(audioChunks, { type: 'audio/mp3' });
-                submitTranscription(audioBlob);
+    /**
+     * Stop audio recording
+     */
+    function stopRecording() {
+        if (!isRecording || !audioRecorder) {
+            console.log("⚠️ No active recording to stop");
+            return;
+        }
+        
+        console.log("🛑 Stopping audio recording");
+        
+        try {
+            // Check recorder state
+            if (audioRecorder && audioRecorder.state && audioRecorder.state !== 'inactive') {
+                audioRecorder.stop();
+                console.log("✅ AudioRecorder stopped");
             } else {
-                displayError('No recording available to transcribe');
+                console.log("⚠️ AudioRecorder was not in active state");
             }
+            
+            isRecording = false;
+            
+            // Don't reset recordingStarted flag here, we'll reset it when the call fully ends
+            
+            console.log("✅ Recording stopped successfully");
+        } catch (error) {
+            console.error("❌ Error stopping recording:", error);
+            displayError("Error stopping recording: " + error.message);
+            // Ensure flags are reset even if there's an error
+            isRecording = false;
+        }
+    }
+    
+    /**
+     * Submit audio for transcription
+     */
+    function submitTranscription(audioBlob) {
+        if (transcriptionInProgress) {
+            console.log("⚠️ Transcription already in progress");
+            return;
+        }
+        
+        if (!audioBlob || audioBlob.size === 0) {
+            console.log("⚠️ No audio data to transcribe");
+            return;
+        }
+        
+        if (!appointmentId) {
+            console.error("❌ Appointment ID not found");
+            displayError("Appointment ID missing, cannot submit transcription");
+            return;
+        }
+        
+        console.log("🔄 Preparing to submit audio for transcription");
+        const formData = new FormData();
+        formData.append('audio_data', audioBlob, 'recording.mp3'); // Changed from 'audio_file' to 'audio_data' to match backend
+        
+        // Get CSRF token from the page
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        if (!csrfToken) {
+            console.error("❌ CSRF token not found");
+            displayError("Security token missing, cannot submit transcription");
+            return;
+        }
+        
+        // Show loading indicator
+        if (loadingIndicator) loadingIndicator.classList.remove('hidden');
+        
+        transcriptionInProgress = true;
+        
+        console.log("📤 Sending audio for transcription...");
+        console.log(`Submitting to endpoint: /transcription/create/${appointmentId}/`);
+        
+        // Send to server with appointment ID in the URL
+        fetch(`/transcription/create/${appointmentId}/`, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': csrfToken,
+                // Don't set Content-Type header with FormData - browser will set it with boundary
+            },
+            credentials: 'same-origin',
+            mode: 'cors' // Allow CORS for cross-origin requests if needed
+        })
+        .then(response => {
+            if (!response.ok) {
+                // Try to extract more detailed error information from response
+                return response.json().catch(() => {
+                    // If response is not JSON, just throw with status
+                    throw new Error(`Server returned ${response.status}: ${response.statusText}`);
+                }).then(errorData => {
+                    // If we got JSON error data, include it in the error
+                    throw new Error(`Server error (${response.status}): ${errorData.error || response.statusText}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("✅ Transcription submitted successfully:", data);
+            if (loadingIndicator) loadingIndicator.classList.add('hidden');
+            
+            // Display success message
+            displaySuccess("Transcription submitted successfully");
+        })
+        .catch(error => {
+            console.error("❌ Error submitting transcription:", error);
+            displayError("Failed to submit transcription: " + error.message);
+            if (loadingIndicator) loadingIndicator.classList.add('hidden');
+        })
+        .finally(() => {
+            transcriptionInProgress = false;
         });
     }
     
-    // Initialize call when page loads
-    if (videoContainer && roomName && token) {
-        initializeCall();
-    }
-    
-    // Handle window unload event
-    window.addEventListener('beforeunload', function(e) {
-        if (isCallActive) {
-            endCall();
+    /**
+     * Initialize chat functionality
+     */
+    function initializeChat() {
+        const chatForm = document.getElementById('chat-form');
+        const chatInput = document.getElementById('chat-input');
+        const chatMessages = document.getElementById('chat-messages');
+        
+        if (!chatForm || !chatInput || !chatMessages) {
+            console.warn("⚠️ Chat elements not found in DOM");
+            return;
         }
-    });
-});
+        
+        chatForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const message = chatInput.value.trim();
+            if (!message || !call) return;
+            
+            // Send chat message through Daily.co
+            call.sendAppMessage({ message }, '*');
+            
+            // Add message to UI
+            addChatMessage('You', message);
+            
+            // Clear input
+            chatInput.value = '';
+        });
+        
+        // Register chat message event handler on call object
+        // Make the function available globally so it can be called from initializeCall
+        window.setupChatMessageHandler = function() {
+            if (!call) {
+                console.warn("⚠️ Call object not available for chat setup");
+                return;
+            }
+            
+            console.log("🔄 Setting up chat message handler");
+            call.on('app-message', function(event) {
+                const { message } = event.data;
+                const sender = event.fromId === call.participants().local.session_id 
+                    ? 'You' 
+                    : call.participants()[event.fromId]?.user_name || 'Other participant';
+                
+                console.log(`📩 Received chat message from ${sender}: ${message}`);
+                addChatMessage(sender, message);
+            });
+        }
+        
+        // Set up handler when call is created
+        // This will also be called from initializeCall
+        if (call) {
+            window.setupChatMessageHandler();
+        }
+        
+        function addChatMessage(sender, message) {
+            // Create message element
+            const messageEl = document.createElement('div');
+            messageEl.className = 'mb-3';
+            messageEl.innerHTML = `
+                <p class="text-sm font-medium text-gray-600">${sender}</p>
+                <div class="bg-gray-100 rounded-lg p-3 mt-1">
+                    <p class="text-gray-800">${message}</p>
+                </div>
+            `;
+            
+            // Add to chat container
+            chatMessages.appendChild(messageEl);
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    }
+}

@@ -1,0 +1,299 @@
+/* Chikitsa360 Custom Styles - Modern Health UI */
+
+:root {
+  /* Primary brand colors */
+  --primary-teal: #00A6A6;
+  --primary-dark: #185E6A;
+  --primary-light: #BBDDE6;
+  
+  /* Secondary/accent colors */
+  --accent-orange: #FF7F5C;
+  --accent-peach: #FFB997;
+  
+  /* UI colors */
+  --ui-dark: #2C3E50;
+  --ui-medium: #627284;
+  --ui-light: #ECF0F1;
+  --ui-white: #FFFFFF;
+  
+  /* Feedback colors */
+  --success: #2ECC71;
+  --warning: #F39C12;
+  --error: #E74C3C;
+  --info: #3498DB;
+}
+
+/* Custom Font Styles */
+body {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--ui-dark);
+  background-color: var(--ui-light);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 700;
+}
+
+/* Header & Navigation */
+.c360-header {
+  background-color: var(--ui-white);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.c360-logo {
+  height: 40px;
+  transition: transform 0.3s ease;
+}
+
+.c360-logo:hover {
+  transform: scale(1.05);
+}
+
+/* Button Styles */
+.c360-btn-primary {
+  background-color: var(--primary-teal);
+  color: white;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  box-shadow: 0 2px 5px rgba(0, 166, 166, 0.3);
+}
+
+.c360-btn-primary:hover, .c360-btn-primary:focus {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 166, 166, 0.4);
+}
+
+.c360-btn-secondary {
+  background-color: var(--ui-white);
+  color: var(--primary-teal);
+  border: 2px solid var(--primary-teal);
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+}
+
+.c360-btn-secondary:hover, .c360-btn-secondary:focus {
+  background-color: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+/* Card Styles */
+.c360-card {
+  background-color: var(--ui-white);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.c360-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.c360-card-highlighted {
+  border-left: 4px solid var(--primary-teal);
+}
+
+/* Service Icons */
+.c360-service-icon {
+  color: var(--primary-teal);
+  background-color: rgba(0, 166, 166, 0.1);
+  padding: 1rem;
+  border-radius: 50%;
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 1.25rem;
+  transition: all 0.3s ease;
+}
+
+.c360-card:hover .c360-service-icon {
+  background-color: var(--primary-teal);
+  color: white;
+  transform: scale(1.1);
+}
+
+/* Testimonial Cards */
+.c360-testimonial {
+  background-color: var(--ui-white);
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  padding: 2rem;
+  position: relative;
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  transition: all 0.3s ease;
+}
+
+.c360-testimonial:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.c360-testimonial-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin: 0 auto;
+  border: 3px solid var(--primary-teal);
+  position: relative;
+  top: -60px;
+  margin-bottom: -40px;
+  background-color: #fff;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.c360-testimonial-quote {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  color: var(--primary-light);
+  font-size: 2rem;
+}
+
+.c360-testimonial-text {
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  color: var(--ui-medium);
+  flex-grow: 1;
+  position: relative;
+  z-index: 1;
+}
+
+.c360-testimonial-name {
+  font-weight: 700;
+  color: var(--ui-dark);
+  margin-bottom: 0.25rem;
+}
+
+.c360-testimonial-role {
+  color: var(--primary-teal);
+  font-size: 0.875rem;
+}
+
+.c360-rating {
+  color: var(--primary-teal);
+  margin-bottom: 1rem;
+}
+
+/* Health Tip Cards */
+.c360-health-tip {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.c360-health-tip:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+}
+
+.c360-health-tip-header {
+  background: linear-gradient(135deg, var(--primary-teal), var(--primary-dark));
+  color: white;
+  padding: 1.5rem;
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.c360-health-tip-content {
+  padding: 1.5rem;
+  background-color: white;
+}
+
+.c360-badge {
+  background-color: rgba(0, 166, 166, 0.1);
+  color: var(--primary-teal);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.c360-badge-featured {
+  background-color: rgba(0, 166, 166, 0.1);
+  color: var(--primary-teal);
+}
+
+/* Hero Section */
+.c360-hero {
+  background: linear-gradient(135deg, var(--primary-teal), var(--primary-dark));
+  color: white;
+  padding: 5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.c360-hero-shape {
+  position: absolute;
+  bottom: -5%;
+  right: -5%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.c360-hero-content {
+  position: relative;
+  z-index: 2;
+}
+
+/* Animation Classes */
+.c360-fade-in {
+  animation: fadeIn 0.5s ease-in;
+}
+
+.c360-slide-up {
+  animation: slideUp 0.5s ease-out;
+}
+
+.c360-slide-in-right {
+  animation: slideInRight 0.5s ease-out;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(30px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+/* Responsive Styles */
+@media (max-width: 768px) {
+  .c360-hero {
+    padding: 3rem 0;
+  }
+  
+  .c360-hero-shape {
+    width: 150px;
+    height: 150px;
+  }
+}
