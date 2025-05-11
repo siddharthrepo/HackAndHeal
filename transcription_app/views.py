@@ -13,56 +13,46 @@ from .services import TranscriptionService
 
 class TranscriptionCreateView(LoginRequiredMixin, View):
     """
-    View for creating a transcription from submitted audio data.
+    View for creating a transcription from submitted audio data using Deepgram only.
     """
     def post(self, request, appointment_id):
         appointment = get_object_or_404(Appointment, id=appointment_id)
-        
+
         # Check permissions
         if request.user != appointment.doctor and request.user != appointment.patient:
             raise PermissionDenied("You don't have permission to transcribe this appointment.")
-        
-        # Get audio data from request
+
         try:
             audio_data = request.FILES.get('audio_data')
-            
+
             if not audio_data:
                 return JsonResponse({'error': 'No audio data provided'}, status=400)
-            
-            # Read audio data
+
             audio_bytes = audio_data.read()
-            
-            # Create or get transcription record
+
             transcription, created = Transcription.objects.get_or_create(
                 appointment=appointment,
                 defaults={'status': Transcription.Status.PENDING}
             )
-            
-            # If previously failed, reset status
+
             if transcription.status == Transcription.Status.FAILED:
                 transcription.status = Transcription.Status.PENDING
                 transcription.error_message = None
                 transcription.save()
-            
-            # Process audio data (asynchronously in a real app)
+
             try:
-                # Try Deepgram first
                 transcript = TranscriptionService.process_audio(audio_bytes, transcription)
             except Exception as e:
-                # Fallback to OpenAI Whisper if Deepgram fails
-                try:
-                    transcript = TranscriptionService.use_openai_whisper(audio_bytes, transcription)
-                except Exception as whisper_e:
-                    return JsonResponse({
-                        'success': False,
-                        'error': f"Transcription failed: {str(whisper_e)}"
-                    }, status=500)
-            
+                return JsonResponse({
+                    'success': False,
+                    'error': f"Transcription failed with Deepgram: {str(e)}"
+                }, status=500)
+
             return JsonResponse({
                 'success': True,
                 'transcription_id': str(transcription.id)
             })
-            
+
         except Exception as e:
             return JsonResponse({
                 'success': False,

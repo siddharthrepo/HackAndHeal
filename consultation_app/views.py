@@ -355,37 +355,31 @@ class AppointmentDetailView(LoginRequiredMixin, DetailView):
         return context
 
 class JoinConsultationView(LoginRequiredMixin, View):
-    """
-    View for joining the video consultation.
-    """
     def get(self, request, pk):
         appointment = get_object_or_404(Appointment, pk=pk)
-        
-        # Check if the user has permission to join this appointment
+        from django.conf import settings
         if request.user != appointment.patient and request.user != appointment.doctor:
             raise PermissionDenied("You don't have permission to join this consultation.")
-        
-        # Check if the appointment is confirmed and can be joined
+
         if appointment.status != Appointment.Status.CONFIRMED:
             messages.error(request, "This appointment is not confirmed.")
             return redirect('appointment_detail', pk=appointment.pk)
-        
+
         if not appointment.can_join:
             messages.error(request, "It's not time for this appointment yet or it has already passed.")
             return redirect('appointment_detail', pk=appointment.pk)
-        
-        # Create or get the video room
+
         if not appointment.video_room_id:
-            # Create a Daily.co room using their API
+            room_name = appointment.video_room_id
             try:
-                room_name = f"chikitsa360-{appointment.id}"
+                room_name = f"chikitsa360-{uuid.uuid4().hex}"
                 daily_api_key = settings.DAILY_API_KEY
-                
+
                 headers = {
-                    'Content-Type': 'application/json',
-                    'Authorization': f'Bearer {daily_api_key}'
+                    'Authorization': f'Bearer {daily_api_key}',
+                    'Content-Type': 'application/json'
                 }
-                
+
                 data = {
                     'name': room_name,
                     'properties': {
@@ -395,57 +389,60 @@ class JoinConsultationView(LoginRequiredMixin, View):
                         'exp': int((timezone.now() + timedelta(hours=2)).timestamp())
                     }
                 }
-                
-                response = requests.post('https://api.daily.co/v1/rooms', 
-                                        headers=headers, 
-                                        data=json.dumps(data))
-                
+
+                print("Sending request to create room...")
+                response = requests.post('https://api.daily.co/v1/rooms', headers=headers, json=data)
+
                 if response.status_code == 200:
                     room_data = response.json()
+                    print(f"Room created successfully: {room_data}")
                     appointment.video_room_id = room_data['name']
                     appointment.save()
                 else:
+                    print(f"Failed to create room, status code: {response.status_code}")
                     messages.error(request, "Failed to create video room. Please try again.")
                     return redirect('appointment_detail', pk=appointment.pk)
-                
+
             except Exception as e:
+                print(f"An error occurred while creating room: {str(e)}")
                 messages.error(request, f"An error occurred: {str(e)}")
                 return redirect('appointment_detail', pk=appointment.pk)
-        
-        # Generate a token for the user
+            room_name = appointment.video_room_id
+            print("room_name_0 -:", room_name)
         try:
+            print(f"Generating access token for room: {appointment.video_room_id}")
             daily_api_key = settings.DAILY_API_KEY
-            
             headers = {
-                'Content-Type': 'application/json',
-                'Authorization': f'Bearer {daily_api_key}'
+                'Authorization': f'Bearer {daily_api_key}',
+                'Content-Type': 'application/json'
             }
-            
+
             data = {
-                'properties': {
-                    'room_name': appointment.video_room_id,
-                    'user_name': request.user.get_full_name() or request.user.email,
-                    'user_id': str(request.user.id),
-                    'exp': int((timezone.now() + timedelta(hours=2)).timestamp())
+                "properties": {
+                    "start_audio_off": True,  
+                    "start_video_off": True,  
+                    "exp": int((timezone.now() + timedelta(hours=2)).timestamp()),  
                 }
             }
-            
-            response = requests.post('https://api.daily.co/v1/meeting-tokens', 
-                                    headers=headers, 
-                                    data=json.dumps(data))
-            
+
+            room_url = f'https://api.daily.co/v1/meeting-tokens'
+            print("Sending request to generate token...")
+            response = requests.post(room_url, headers=headers, json=data)
+
             if response.status_code == 200:
                 token_data = response.json()
                 token = token_data['token']
+                print(f"Token generated: {token}")
             else:
+                print(f"Failed to generate token, status code: {response.status_code}")
                 messages.error(request, "Failed to generate access token. Please try again.")
                 return redirect('appointment_detail', pk=appointment.pk)
-            
+
         except Exception as e:
+            print(f"An error occurred while generating token: {str(e)}")
             messages.error(request, f"An error occurred: {str(e)}")
             return redirect('appointment_detail', pk=appointment.pk)
         
-        # Render the video consultation page
         context = {
             'appointment': appointment,
             'room_name': appointment.video_room_id,
@@ -455,7 +452,7 @@ class JoinConsultationView(LoginRequiredMixin, View):
             'doctor_name': appointment.doctor.get_full_name() or appointment.doctor.email,
             'reason': appointment.reason
         }
-        
+
         return render(request, 'consultation/video_room.html', context)
 
 class PatientAppointmentsView(LoginRequiredMixin, PatientRequiredMixin, ListView):
