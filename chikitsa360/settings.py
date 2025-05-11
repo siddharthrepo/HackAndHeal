@@ -166,3 +166,7 @@ SECURE_SSL_REDIRECT = False
 
 # CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 # CRISPY_TEMPLATE_PACK = "tailwind"
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://f768-122-161-79-89.ngrok-free.app"
+]

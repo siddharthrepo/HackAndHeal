@@ -1,12 +1,22 @@
 {% if form.errors %}
-<div class="mb-4 text-red-600 text-sm">
+<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+    {% if form.non_field_errors %}
+        <div class="mb-2">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+    
     {% for field in form %}
-        {% for error in field.errors %}
-            <p><strong>{{ field.label }}:</strong> {{ error }}</p>
-        {% endfor %}
-    {% endfor %}
-    {% for error in form.non_field_errors %}
-        <p>{{ error }}</p>
+        {% if field.errors %}
+            <div class="mb-1">
+                <strong>{{ field.label }}:</strong>
+                {% for error in field.errors %}
+                    <span>{{ error }}</span>
+                {% endfor %}
+            </div>
+        {% endif %}
     {% endfor %}
 </div>
 {% endif %}

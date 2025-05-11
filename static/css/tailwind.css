@@ -28,7 +28,8 @@
 }
 
 .form-input {
-  @apply w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+  @apply w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm
+         focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500;
 }
 
 .form-label {
