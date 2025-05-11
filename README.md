@@ -1,4 +1,5 @@
-# 🏥 **Chikitsa360** | *Healthcare Anywhere, Anytime*
+<h1 align="center">🏥 <strong>Chikitsa360</strong> | <em>Healthcare Anywhere!</em></h1>
+
 
 <div align="center">
   <img src="static/images/chikitsa360-logo.png" alt="Chikitsa360 Banner" />
@@ -247,10 +248,6 @@ The architecture ensures that users can quickly locate needed information with m
 - **Stuti Sharma** - Full Stack Development
 - **Sona Poddar** - Full Stack Development
 - **Vidhi Jain** - UI/UX Design & Documentation
-
-## 📜 **License**
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
