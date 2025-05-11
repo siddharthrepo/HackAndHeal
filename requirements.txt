@@ -14,3 +14,4 @@ django-environ
 django-widget-tweaks
 gunicorn
 dj-database-url
+whitenoise
