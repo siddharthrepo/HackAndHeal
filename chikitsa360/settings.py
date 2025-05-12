@@ -203,7 +203,13 @@ DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', '')
 
 # OpenAI settings (for Whisper)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+INSTALLED_APPS += ['csp']
 
+MIDDLEWARE = ['csp.middleware.CSPMiddleware'] + MIDDLEWARE
+
+CSP_CONNECT_SRC = ["'self'", "https://*.daily.co"]
+CSP_FRAME_SRC = ["'self'", "https://*.daily.co"]
+CSP_MEDIA_SRC = ["'self'", "https://*.daily.co"]
 # Session settings
 if DEBUG:
     SECURE_SSL_REDIRECT = False
