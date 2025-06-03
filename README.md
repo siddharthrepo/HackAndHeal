@@ -167,7 +167,7 @@ Our solution directly addresses the Veersa Hackathon Use Case 2 requirements:
 
 ## 📱 **Live Demo**
 
-- **Live Application**: [https://chikitsa360.koyeb.app](https://chikitsa360.koyeb.app)
+- **Live Application**: [https://helpless-trixy-siddharthrepo-de886f3f.koyeb.app/)
 - **Demo Video**: [Watch Project Demo](https://drive.google.com/file/d/1wqVfEuVkxP7hajtmYi1CWqQKUJ5nacaR/view?usp=sharing) <!-- 👈 Add your demo video link here -->
 
 ## 🖼️ **UI/UX Design**
