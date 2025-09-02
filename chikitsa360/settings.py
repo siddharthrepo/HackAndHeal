@@ -207,9 +207,41 @@ INSTALLED_APPS += ['csp']
 
 MIDDLEWARE = ['csp.middleware.CSPMiddleware'] + MIDDLEWARE
 
-CSP_CONNECT_SRC = ["'self'", "https://*.daily.co"]
-CSP_FRAME_SRC = ["'self'", "https://*.daily.co"]
-CSP_MEDIA_SRC = ["'self'", "https://*.daily.co"]
+CONTENT_SECURITY_POLICY = {
+    'DIRECTIVES': {
+        'default-src': ["'self'"],
+        'style-src': [
+            "'self'", "'unsafe-inline'", '/static/', '/staticfiles/',
+            'https://fonts.googleapis.com',
+            'https://cdn.tailwindcss.com',
+            'https://cdnjs.cloudflare.com',
+            'https://use.fontawesome.com'
+        ],
+        'script-src': [
+            "'self'", "'unsafe-inline'", '/static/', '/staticfiles/',
+            'https://cdn.tailwindcss.com',
+            'https://cdnjs.cloudflare.com',
+            'https://use.fontawesome.com',
+            'https://unpkg.com',
+            'https://*.daily.co'
+        ],
+        'img-src': [
+            "'self'", 'data:', '/static/', '/staticfiles/',
+            'https://images.unsplash.com',
+            'https://cdn.jsdelivr.net',
+            'https://*'
+        ],
+        'font-src': [
+            "'self'", '/static/', '/staticfiles/',
+            'https://fonts.gstatic.com',
+            'https://cdnjs.cloudflare.com',
+            'https://use.fontawesome.com'
+        ],
+        'connect-src': ["'self'", 'https://*.daily.co'],
+        'frame-src': ["'self'", 'https://*.daily.co'],
+        'media-src': ["'self'", 'https://*.daily.co'],
+    }
+}
 # Session settings
 if DEBUG:
     SECURE_SSL_REDIRECT = False
