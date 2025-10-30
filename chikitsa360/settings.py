@@ -97,6 +97,8 @@ else:
 
 CSRF_TRUSTED_ORIGINS = [
     "https://helpless-trixy-siddharthrepo-de886f3f.koyeb.app",
+    "https://5904-122-161-79-89.ngrok-free.app",
+    "https://8cbdc91157c8.ngrok-free.app",
 ]
 
 ROOT_URLCONF = 'chikitsa360.urls'
@@ -203,6 +205,15 @@ DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', '')
 
 # OpenAI settings (for Whisper)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+
+# INSTALLED_APPS += ['csp']
+
+# MIDDLEWARE = ['csp.middleware.CSPMiddleware'] + MIDDLEWARE
+
+# CSP_CONNECT_SRC = ["'self'", "https://*.daily.co"]
+# CSP_FRAME_SRC = ["'self'", "https://*.daily.co"]
+# CSP_MEDIA_SRC = ["'self'", "https://*.daily.co"]
+
 
 # Session settings
 if DEBUG:

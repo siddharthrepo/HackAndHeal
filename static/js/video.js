@@ -93,6 +93,7 @@ function initializeVideoConsultation() {
 
             // Create Daily.co call object and assign to global window
             console.log("Creating Daily.co frame with target:", videoContainer);
+            console.log("DailyIframe:", DailyIframe);
             window.call = DailyIframe.createFrame(videoContainer, {
                 showLeaveButton: true,
                 iframeStyle: {
