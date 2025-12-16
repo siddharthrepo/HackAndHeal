@@ -95,11 +95,9 @@ else:
     }
 
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://helpless-trixy-siddharthrepo-de886f3f.koyeb.app",
-    "https://5904-122-161-79-89.ngrok-free.app",
-    "https://8cbdc91157c8.ngrok-free.app",
-]
+# Allow all origins for CSRF (not recommended for production)
+# Use environment variable to add specific origins when needed
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else []
 
 ROOT_URLCONF = 'chikitsa360.urls'
 WSGI_APPLICATION = 'chikitsa360.wsgi.application'
