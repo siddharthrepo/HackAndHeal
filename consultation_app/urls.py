@@ -4,7 +4,9 @@ from .views import (
     AvailabilityCreateView, AvailabilityDeleteView, DoctorAvailabilityView,
     BookAppointmentView, AppointmentDetailView, JoinConsultationView,
     PatientAppointmentsView, DoctorAppointmentsView,
-    UpdateAppointmentStatusView, CancelAppointmentView
+    UpdateAppointmentStatusView, CancelAppointmentView,
+    PrescriptionCreateView, PrescriptionDetailView, PrescriptionPDFView,
+    FollowUpCreateView, TriggerRemindersView,
 )
 
 urlpatterns = [
@@ -30,5 +32,14 @@ urlpatterns = [
     # consultation_app/urls.py or your main urls.py
     path('consultation/join/<uuid:pk>/', JoinConsultationView.as_view(), name='join_video_call'),
 
+    # Prescriptions
+    path('appointment/<uuid:appointment_id>/prescription/create/', PrescriptionCreateView.as_view(), name='prescription_create'),
+    path('prescription/<uuid:pk>/', PrescriptionDetailView.as_view(), name='prescription_detail'),
+    path('prescription/<uuid:pk>/pdf/', PrescriptionPDFView.as_view(), name='prescription_pdf'),
 
+    # Follow-up
+    path('appointment/<uuid:appointment_id>/follow-up/', FollowUpCreateView.as_view(), name='follow_up_create'),
+
+    # Reminders API
+    path('api/trigger-reminders/', TriggerRemindersView.as_view(), name='trigger_reminders'),
 ]

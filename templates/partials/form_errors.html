@@ -1,5 +1,5 @@
 {% if form.errors %}
-<div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+<div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-4">
     {% if form.non_field_errors %}
         <div class="mb-2">
             {% for error in form.non_field_errors %}
@@ -7,11 +7,11 @@
             {% endfor %}
         </div>
     {% endif %}
-    
+
     {% for field in form %}
         {% if field.errors %}
             <div class="mb-1">
-                <strong>{{ field.label }}:</strong>
+                <strong class="text-red-800 dark:text-red-300">{{ field.label }}:</strong>
                 {% for error in field.errors %}
                     <span>{{ error }}</span>
                 {% endfor %}

@@ -5,67 +5,67 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto py-10 px-4">
-    <h2 class="text-2xl font-bold text-gray-800 mb-6">Appointment Details</h2>
+    <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-6">Appointment Details</h2>
 
     <!-- Appointment Info -->
-    <div class="bg-white shadow p-6 rounded-lg border space-y-6">
+    <div class="glass rounded-xl p-6 space-y-6">
         <div>
-            <h3 class="text-lg font-semibold text-gray-700">Date & Time</h3>
-            <p class="text-gray-600">{{ appointment.appointment_date }} at {{ appointment.appointment_time|time:"H:i" }}</p>
+            <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">Date & Time</h3>
+            <p class="text-slate-600 dark:text-slate-400">{{ appointment.appointment_date }} at {{ appointment.appointment_time|time:"H:i" }}</p>
         </div>
 
         <div>
-            <h3 class="text-lg font-semibold text-gray-700">Patient</h3>
-            <p class="text-gray-600">{{ appointment.patient.get_full_name }}</p>
+            <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">Patient</h3>
+            <p class="text-slate-600 dark:text-slate-400">{{ appointment.patient.get_full_name }}</p>
         </div>
 
         <div>
-            <h3 class="text-lg font-semibold text-gray-700">Doctor</h3>
-            <p class="text-gray-600">{{ appointment.doctor.get_full_name }}</p>
+            <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">Doctor</h3>
+            <p class="text-slate-600 dark:text-slate-400">{{ appointment.doctor.get_full_name }}</p>
         </div>
 
         {% if appointment.reason %}
         <div>
-            <h3 class="text-lg font-semibold text-gray-700">Reason</h3>
-            <p class="text-gray-600">{{ appointment.reason }}</p>
+            <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">Reason</h3>
+            <p class="text-slate-600 dark:text-slate-400">{{ appointment.reason }}</p>
         </div>
         {% endif %}
 
         {% if appointment.notes %}
         <div>
-            <h3 class="text-lg font-semibold text-gray-700">Doctor's Notes</h3>
-            <p class="text-gray-600 whitespace-pre-wrap">{{ appointment.notes }}</p>
+            <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">Doctor's Notes</h3>
+            <p class="text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{{ appointment.notes }}</p>
         </div>
         {% endif %}
 
         <!-- Status -->
         <div>
-            <h3 class="text-lg font-semibold text-gray-700">Status</h3>
-            <span class="inline-block px-3 py-1 rounded text-sm 
-                {% if appointment.status == 'CONFIRMED' %}bg-green-100 text-green-800
-                {% elif appointment.status == 'COMPLETED' %}bg-blue-100 text-blue-800
-                {% elif appointment.status == 'CANCELLED' %}bg-red-100 text-red-800
-                {% elif appointment.status == 'NO_SHOW' %}bg-yellow-100 text-yellow-800
-                {% else %}bg-gray-100 text-gray-800{% endif %}
+            <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">Status</h3>
+            <span class="inline-block px-3 py-1 rounded-full text-sm font-medium
+                {% if appointment.status == 'CONFIRMED' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400
+                {% elif appointment.status == 'COMPLETED' %}bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400
+                {% elif appointment.status == 'CANCELLED' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                {% elif appointment.status == 'NO_SHOW' %}bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400
+                {% else %}bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300{% endif %}
             ">
                 {{ appointment.get_status_display }}
             </span>
         </div>
 
-        <!-- Video Call Join / Scheduled -->
+        <!-- Video Call Join -->
         {% if appointment.status == 'CONFIRMED' %}
         <div class="mt-6">
             {% if appointment.can_join %}
                 <a href="{% url 'join_consultation' appointment.pk %}"
-                   class="inline-block bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded">
+                   class="inline-block bg-emerald-500 hover:bg-emerald-600 text-white font-medium py-2.5 px-5 rounded-xl shadow-lg shadow-emerald-500/25 transition-all hover:-translate-y-0.5">
                     Join Consultation
                 </a>
-                <p class="text-sm text-gray-500 mt-2">
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-2">
                     Your consultation room is ready. Click above to join.
                 </p>
             {% else %}
-                <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mt-4 rounded-md">
-                    <p class="text-yellow-800 text-sm">
+                <div class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-400 p-4 mt-4 rounded-r-xl">
+                    <p class="text-amber-800 dark:text-amber-400 text-sm">
                         Video call has been scheduled. You can join 15 minutes before your appointment time.
                     </p>
                 </div>
@@ -75,16 +75,16 @@
 
         <!-- Doctor Status Update -->
         {% if user == appointment.doctor %}
-        <div class="mt-6 border-t pt-6">
-            <h3 class="text-lg font-semibold text-gray-700 mb-2">Update Status</h3>
+        <div class="mt-6 border-t border-slate-200 dark:border-slate-700 pt-6">
+            <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">Update Status</h3>
             <form method="post" action="{% url 'update_appointment_status' appointment.pk %}" class="flex flex-wrap items-center gap-3">
                 {% csrf_token %}
-                <select name="status" class="rounded border-gray-300 text-sm py-2 px-3">
+                <select name="status" class="form-input w-auto">
                     {% for key, label in appointment.Status.choices %}
                         <option value="{{ key }}" {% if appointment.status == key %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
-                <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm">Update</button>
+                <button type="submit" class="c360-btn-primary text-sm px-4 py-2">Update</button>
             </form>
         </div>
         {% endif %}
@@ -95,7 +95,7 @@
         <div class="mt-6">
             <form method="post" action="{% url 'cancel_appointment' appointment.pk %}" onsubmit="return confirm('Are you sure you want to cancel this appointment?');">
                 {% csrf_token %}
-                <button type="submit" class="text-red-600 hover:underline text-sm">Cancel Appointment</button>
+                <button type="submit" class="text-red-500 dark:text-red-400 hover:underline text-sm">Cancel Appointment</button>
             </form>
         </div>
     {% endif %}
@@ -105,23 +105,182 @@
 
     <!-- Doctor Profile -->
     {% if doctor_profile %}
-    <div class="mt-8 bg-gray-50 p-6 rounded-lg border">
-        <h3 class="text-xl font-semibold text-gray-700 mb-4">Doctor Profile</h3>
-        <p><strong>Specialty:</strong> {{ doctor_profile.specialty }}</p>
+    <div class="mt-8 glass rounded-xl p-6">
+        <h3 class="text-xl font-semibold text-slate-700 dark:text-white mb-4">Doctor Profile</h3>
+        <p class="text-slate-600 dark:text-slate-400"><strong class="text-slate-700 dark:text-slate-300">Specialty:</strong> {{ doctor_profile.specialty }}</p>
         {% if doctor_profile.bio %}
-        <p class="mt-2 text-gray-600 whitespace-pre-wrap">{{ doctor_profile.bio }}</p>
+        <p class="mt-2 text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{{ doctor_profile.bio }}</p>
         {% endif %}
     </div>
     {% endif %}
 
     <!-- Payment Info -->
     {% if payment %}
-    <div class="mt-8 bg-gray-50 p-6 rounded-lg border">
-        <h3 class="text-xl font-semibold text-gray-700 mb-4">Payment Details</h3>
-        <p><strong>Amount:</strong> ₹{{ payment.amount }}</p>
-        <p><strong>Status:</strong> {{ payment.status }}</p>
-        <p><strong>Transaction ID:</strong> {{ payment.transaction_id }}</p>
+    <div class="mt-8 glass rounded-xl p-6">
+        <h3 class="text-xl font-semibold text-slate-700 dark:text-white mb-4">Payment Details</h3>
+        <p class="text-slate-600 dark:text-slate-400"><strong class="text-slate-700 dark:text-slate-300">Amount:</strong> ₹{{ payment.amount }}</p>
+        <p class="text-slate-600 dark:text-slate-400"><strong class="text-slate-700 dark:text-slate-300">Status:</strong> {{ payment.status }}</p>
+        <p class="text-slate-600 dark:text-slate-400"><strong class="text-slate-700 dark:text-slate-300">Transaction ID:</strong> {{ payment.transaction_id }}</p>
     </div>
     {% endif %}
+
+    <!-- SOAP Notes Section -->
+    <div class="mt-8 glass rounded-xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold text-slate-700 dark:text-white">
+                <i class="fas fa-file-medical text-indigo-500 mr-2"></i>SOAP Notes
+            </h3>
+            {% if is_doctor and transcription and transcription.status == 'COMPLETED' %}
+            <form method="post" action="{% url 'soap_note_regenerate' appointment.pk %}" onsubmit="return confirm('Regenerate SOAP notes? This will replace the current notes.');">
+                {% csrf_token %}
+                <button type="submit" class="text-sm text-indigo-500 hover:text-indigo-600 font-medium">
+                    <i class="fas fa-rotate mr-1"></i> Regenerate
+                </button>
+            </form>
+            {% endif %}
+        </div>
+
+        {% if soap_note %}
+            {% if soap_note.status == 'COMPLETED' %}
+                <div class="space-y-4">
+                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mb-1">
+                            <i class="fas fa-user mr-1"></i> Subjective
+                        </h4>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm whitespace-pre-wrap">{{ soap_note.subjective }}</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mb-1">
+                            <i class="fas fa-stethoscope mr-1"></i> Objective
+                        </h4>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm whitespace-pre-wrap">{{ soap_note.objective }}</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mb-1">
+                            <i class="fas fa-clipboard-check mr-1"></i> Assessment
+                        </h4>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm whitespace-pre-wrap">{{ soap_note.assessment }}</p>
+                    </div>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 mb-1">
+                            <i class="fas fa-list-check mr-1"></i> Plan
+                        </h4>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm whitespace-pre-wrap">{{ soap_note.plan }}</p>
+                    </div>
+                </div>
+                {% if soap_note.is_edited %}
+                <p class="text-xs text-amber-500 mt-2"><i class="fas fa-pen mr-1"></i> Edited by doctor</p>
+                {% endif %}
+                <div class="mt-4">
+                    <a href="{% url 'soap_note_detail' soap_note.pk %}" class="text-sm text-indigo-500 hover:text-indigo-600 font-medium">
+                        {% if is_doctor %}View / Edit Full SOAP Note{% else %}View Full SOAP Note{% endif %} <i class="fas fa-arrow-right ml-1"></i>
+                    </a>
+                </div>
+            {% elif soap_note.status == 'GENERATING' or soap_note.status == 'PENDING' %}
+                <div class="flex items-center gap-3 text-slate-500 dark:text-slate-400 py-4">
+                    <svg class="animate-spin h-5 w-5 text-indigo-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <span>AI is generating SOAP notes from the transcription... Please refresh in a moment.</span>
+                </div>
+            {% elif soap_note.status == 'FAILED' %}
+                <div class="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 p-4 rounded-r-xl">
+                    <p class="text-red-700 dark:text-red-400 text-sm">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        SOAP note generation failed. {% if soap_note.error_message %}{{ soap_note.error_message }}{% endif %}
+                    </p>
+                </div>
+            {% endif %}
+        {% else %}
+            <p class="text-slate-500 dark:text-slate-400 text-sm py-2">
+                {% if transcription and transcription.status == 'COMPLETED' %}
+                    SOAP notes will be generated automatically. Click "Regenerate" to start.
+                {% else %}
+                    SOAP notes will be available after the consultation transcription is completed.
+                {% endif %}
+            </p>
+        {% endif %}
+    </div>
+
+    <!-- Prescriptions Section -->
+    <div class="mt-8 glass rounded-xl p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-xl font-semibold text-slate-700 dark:text-white">
+                <i class="fas fa-prescription text-indigo-500 mr-2"></i>Prescriptions
+            </h3>
+            {% if is_doctor %}
+            <a href="{% url 'prescription_create' appointment.pk %}" class="text-sm text-indigo-500 hover:text-indigo-600 font-medium">
+                <i class="fas fa-plus mr-1"></i> New Prescription
+            </a>
+            {% endif %}
+        </div>
+
+        {% if prescriptions %}
+        <div class="space-y-3">
+            {% for rx in prescriptions %}
+            <div class="flex items-center justify-between bg-slate-50 dark:bg-slate-800/50 rounded-lg p-4">
+                <div>
+                    <p class="text-sm font-medium text-slate-700 dark:text-slate-300">{{ rx.diagnosis|truncatewords:15 }}</p>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        {{ rx.items.count }} medication{{ rx.items.count|pluralize }} &nbsp;|&nbsp; {{ rx.created_at|date:"d M Y" }}
+                    </p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <a href="{% url 'prescription_detail' rx.pk %}" class="text-indigo-500 hover:text-indigo-600 text-sm font-medium">
+                        <i class="fas fa-eye mr-1"></i> View
+                    </a>
+                    <a href="{% url 'prescription_pdf' rx.pk %}" class="text-emerald-500 hover:text-emerald-600 text-sm font-medium">
+                        <i class="fas fa-download mr-1"></i> PDF
+                    </a>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-slate-500 dark:text-slate-400 text-sm py-2">No prescriptions yet.{% if is_doctor %} Click "New Prescription" to create one.{% endif %}</p>
+        {% endif %}
+    </div>
+
+    <!-- Follow-Up Section -->
+    <div class="mt-8 glass rounded-xl p-6">
+        <h3 class="text-xl font-semibold text-slate-700 dark:text-white mb-4">
+            <i class="fas fa-calendar-check text-indigo-500 mr-2"></i>Follow-Up
+        </h3>
+
+        {% if follow_up %}
+        <div class="bg-emerald-50 dark:bg-emerald-900/20 border-l-4 border-emerald-400 p-4 rounded-r-xl mb-4">
+            <p class="text-emerald-800 dark:text-emerald-400 text-sm">
+                <strong>Follow-up Date:</strong> {{ follow_up.follow_up_date|date:"d M Y" }}
+                {% if follow_up.reminder_sent %}
+                    <span class="ml-2 text-xs bg-emerald-200 dark:bg-emerald-800 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-full">Reminder Sent</span>
+                {% endif %}
+            </p>
+            {% if follow_up.notes %}
+            <p class="text-emerald-700 dark:text-emerald-300 text-sm mt-2">{{ follow_up.notes }}</p>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if is_doctor and follow_up_form %}
+        <form method="post" action="{% url 'follow_up_create' appointment.pk %}" class="space-y-3">
+            {% csrf_token %}
+            <div>
+                <label class="form-label">Follow-up Date</label>
+                {{ follow_up_form.follow_up_date }}
+                {% for error in follow_up_form.follow_up_date.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div>
+                <label class="form-label">Notes</label>
+                {{ follow_up_form.notes }}
+            </div>
+            <button type="submit" class="c360-btn-primary text-sm px-4 py-2">
+                <i class="fas fa-save mr-1"></i> {% if follow_up %}Update{% else %}Set{% endif %} Follow-Up
+            </button>
+        </form>
+        {% elif not follow_up %}
+        <p class="text-slate-500 dark:text-slate-400 text-sm py-2">No follow-up scheduled for this appointment.</p>
+        {% endif %}
+    </div>
 </div>
 {% endblock %}

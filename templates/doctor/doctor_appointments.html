@@ -1,37 +1,45 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}My Appointments{% endblock %}
+{% block title %}My Appointments - HealthMeter{% endblock %}
 
 {% block content %}
+<section class="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-700 dark:from-indigo-900 dark:via-slate-900 dark:to-slate-950 py-10 text-white">
+  <div class="max-w-6xl mx-auto px-4">
+    <h1 class="text-3xl font-bold">My Appointments</h1>
+    <p class="mt-2 text-indigo-100 text-sm">Manage and review all your patient appointments.</p>
+  </div>
+</section>
+
 <div class="max-w-6xl mx-auto py-10 px-4">
-    <h2 class="text-2xl font-bold text-gray-800 mb-8">My Appointments</h2>
 
     {% for section in appointment_sections %}
         <div class="mb-10">
-            <h3 class="text-xl font-semibold text-primary mb-4">{{ section.label }}</h3>
+            <h3 class="text-xl font-semibold text-slate-800 dark:text-white mb-4">{{ section.label }}</h3>
             {% if section.appointments %}
                 <div class="space-y-4">
                     {% for appointment in section.appointments %}
-                        <div class="bg-white p-5 rounded-lg shadow border flex flex-col md:flex-row md:justify-between md:items-center">
+                        <div class="glass rounded-xl p-5 flex flex-col md:flex-row md:justify-between md:items-center">
                             <div>
-                                <p class="text-lg font-medium text-gray-800">
+                                <p class="text-lg font-medium text-slate-800 dark:text-white">
+                                    <i class="fas fa-calendar-alt mr-2 text-indigo-500 dark:text-indigo-400"></i>
                                     {{ appointment.appointment_date }} — {{ appointment.appointment_time|time:"H:i" }}
                                 </p>
-                                <p class="text-sm text-gray-600">
-                                    Patient: {{ appointment.patient.get_full_name }}
+                                <p class="text-sm text-slate-600 dark:text-slate-400 mt-1">
+                                    <i class="fas fa-user mr-1"></i> Patient: {{ appointment.patient.get_full_name }}
                                 </p>
                                 {% if appointment.reason %}
-                                    <p class="text-sm text-gray-500 mt-1">Reason: {{ appointment.reason }}</p>
+                                    <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                                        <span class="font-medium text-slate-700 dark:text-slate-300">Reason:</span> {{ appointment.reason }}
+                                    </p>
                                 {% endif %}
-                                <p class="text-sm mt-1">
-                                    Status: 
-                                    <span class="inline-block px-2 py-1 rounded 
-                                        {% if appointment.status == 'CONFIRMED' %}bg-green-100 text-green-800
-                                        {% elif appointment.status == 'COMPLETED' %}bg-blue-100 text-blue-800
-                                        {% elif appointment.status == 'CANCELLED' %}bg-red-100 text-red-800
-                                        {% elif appointment.status == 'NO_SHOW' %}bg-yellow-100 text-yellow-800
-                                        {% else %}bg-gray-100 text-gray-800{% endif %}
+                                <p class="text-sm mt-2">
+                                    <span class="inline-block px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if appointment.status == 'CONFIRMED' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400
+                                        {% elif appointment.status == 'COMPLETED' %}bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400
+                                        {% elif appointment.status == 'CANCELLED' %}bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400
+                                        {% elif appointment.status == 'NO_SHOW' %}bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400
+                                        {% else %}bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300{% endif %}
                                     ">
                                         {{ appointment.get_status_display }}
                                     </span>
@@ -41,11 +49,11 @@
                             <!-- Action buttons -->
                             <div class="mt-4 md:mt-0 flex flex-col space-y-2 md:space-y-0 md:space-x-3 md:flex-row">
                                 {% if appointment.status == 'CONFIRMED' %}
-                                    <a href="{% url 'join_consultation' appointment.pk %}" class="bg-teal-600 hover:bg-teal-700 text-white px-4 py-2 rounded text-sm font-medium">
-                                        Join Consultation
+                                    <a href="{% url 'join_consultation' appointment.pk %}" class="inline-block bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-xl text-sm font-medium shadow-lg shadow-emerald-500/25 transition-all hover:-translate-y-0.5 text-center">
+                                        <i class="fas fa-video mr-1"></i> Join Consultation
                                     </a>
                                 {% endif %}
-                                <a href="{% url 'appointment_detail' appointment.pk %}" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-2 rounded text-sm font-medium">
+                                <a href="{% url 'appointment_detail' appointment.pk %}" class="inline-block bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-xl text-sm font-medium transition-colors text-center">
                                     View Details
                                 </a>
                             </div>
@@ -53,7 +61,9 @@
                     {% endfor %}
                 </div>
             {% else %}
-                <p class="text-sm text-gray-500">No {{ section.label|lower }} available.</p>
+                <div class="glass rounded-xl p-8 text-center">
+                    <p class="text-sm text-slate-500 dark:text-slate-400">No {{ section.label|lower }} available.</p>
+                </div>
             {% endif %}
         </div>
     {% endfor %}

@@ -6,49 +6,49 @@
 <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
     <!-- Header -->
     <div class="mb-8">
-        <h1 class="text-2xl font-bold text-gray-800 mb-1">
+        <h1 class="text-2xl font-bold text-slate-800 dark:text-white mb-1">
             Book Appointment with Dr. {{ doctor.get_full_name }}
         </h1>
         {% if doctor_profile %}
-        <p class="text-[var(--primary-teal)]">{{ doctor_profile.specialty }}</p>
+        <p class="text-indigo-500 dark:text-indigo-400">{{ doctor_profile.specialty }}</p>
         {% endif %}
     </div>
 
     <!-- Appointment Slot Summary -->
-    <div class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
-        <h2 class="text-lg font-semibold text-gray-800 mb-2">Selected Slot</h2>
-        <p class="text-gray-700">
-            <strong>Date:</strong> {{ availability.date|date:"l, F j, Y" }}<br>
-            <strong>Time:</strong> {{ availability.start_time|time:"g:i A" }} - {{ availability.end_time|time:"g:i A" }}
+    <div class="glass rounded-xl p-6 mb-6">
+        <h2 class="text-lg font-semibold text-slate-800 dark:text-white mb-2">Selected Slot</h2>
+        <p class="text-slate-600 dark:text-slate-400">
+            <strong class="text-slate-700 dark:text-slate-300">Date:</strong> {{ availability.date|date:"l, F j, Y" }}<br>
+            <strong class="text-slate-700 dark:text-slate-300">Time:</strong> {{ availability.start_time|time:"g:i A" }} - {{ availability.end_time|time:"g:i A" }}
         </p>
-        <p class="text-gray-700 mt-2">
-            <strong>Consultation Fee:</strong>
+        <p class="text-slate-600 dark:text-slate-400 mt-2">
+            <strong class="text-slate-700 dark:text-slate-300">Consultation Fee:</strong>
             {% if doctor_profile %}
-                <span class="text-[var(--primary-dark)] font-medium">₹{{ doctor_profile.consultation_fee }}</span>
+                <span class="text-indigo-600 dark:text-indigo-400 font-medium">₹{{ doctor_profile.consultation_fee }}</span>
             {% else %}
-                <span class="text-red-600">Not available</span>
+                <span class="text-red-500">Not available</span>
             {% endif %}
         </p>
     </div>
 
     <!-- Appointment Form -->
-    <form method="post" class="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-6">
+    <form method="post" class="glass rounded-xl p-6 space-y-6">
         {% csrf_token %}
         <div>
-            <label for="id_reason" class="block text-sm font-medium text-gray-700 mb-1">
+            <label for="id_reason" class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
                 Reason for Consultation
             </label>
             {{ form.reason }}
             {% if form.reason.help_text %}
-            <p class="text-sm text-gray-500 mt-1">{{ form.reason.help_text }}</p>
+            <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">{{ form.reason.help_text }}</p>
             {% endif %}
             {% if form.reason.errors %}
-            <p class="text-sm text-red-600 mt-1">{{ form.reason.errors.0 }}</p>
+            <p class="text-sm text-red-500 mt-1">{{ form.reason.errors.0 }}</p>
             {% endif %}
         </div>
 
-        <div class="pt-4 border-t border-gray-200 flex justify-end">
-            <button type="submit" class="px-6 py-2 bg-[var(--primary-teal)] hover:bg-[var(--primary-dark)] text-white font-semibold rounded-md shadow transition-colors">
+        <div class="pt-4 border-t border-slate-200 dark:border-slate-700 flex justify-end">
+            <button type="submit" class="c360-btn-primary px-6 py-2.5">
                 Confirm & Proceed to Payment
             </button>
         </div>

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Prescription — {{ appointment.patient.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-white">
+            <i class="fas fa-prescription text-indigo-500 mr-2"></i>Prescription
+        </h2>
+        <div class="flex items-center gap-3">
+            <a href="{% url 'prescription_pdf' prescription.pk %}" class="c360-btn-primary text-sm px-4 py-2">
+                <i class="fas fa-download mr-1"></i> Download PDF
+            </a>
+            <a href="{% url 'appointment_detail' appointment.pk %}" class="text-indigo-500 hover:text-indigo-600 text-sm font-medium">
+                <i class="fas fa-arrow-left mr-1"></i> Back
+            </a>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <div class="glass rounded-xl p-6 mb-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-400">
+            <p><strong class="text-slate-700 dark:text-slate-300">Patient:</strong> {{ appointment.patient.get_full_name }}</p>
+            <p><strong class="text-slate-700 dark:text-slate-300">Doctor:</strong> Dr. {{ appointment.doctor.get_full_name }}</p>
+            <p><strong class="text-slate-700 dark:text-slate-300">Date:</strong> {{ prescription.created_at|date:"d M Y" }}</p>
+            <p><strong class="text-slate-700 dark:text-slate-300">Appointment:</strong> {{ appointment.appointment_date }}</p>
+        </div>
+    </div>
+
+    <!-- Diagnosis -->
+    <div class="glass rounded-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            <i class="fas fa-notes-medical text-indigo-500 mr-2"></i>Diagnosis
+        </h3>
+        <p class="text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{{ prescription.diagnosis }}</p>
+    </div>
+
+    <!-- Medications -->
+    <div class="glass rounded-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-4">
+            <i class="fas fa-pills text-indigo-500 mr-2"></i>Medications
+        </h3>
+        {% if items %}
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+                <thead>
+                    <tr class="bg-indigo-50 dark:bg-indigo-900/20">
+                        <th class="px-4 py-2 text-left text-indigo-700 dark:text-indigo-400 font-semibold">#</th>
+                        <th class="px-4 py-2 text-left text-indigo-700 dark:text-indigo-400 font-semibold">Medication</th>
+                        <th class="px-4 py-2 text-left text-indigo-700 dark:text-indigo-400 font-semibold">Dosage</th>
+                        <th class="px-4 py-2 text-left text-indigo-700 dark:text-indigo-400 font-semibold">Frequency</th>
+                        <th class="px-4 py-2 text-left text-indigo-700 dark:text-indigo-400 font-semibold">Duration</th>
+                        <th class="px-4 py-2 text-left text-indigo-700 dark:text-indigo-400 font-semibold">Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr class="border-b border-slate-100 dark:border-slate-700 {% cycle '' 'bg-slate-50 dark:bg-slate-800/50' %}">
+                        <td class="px-4 py-3 text-slate-500">{{ forloop.counter }}</td>
+                        <td class="px-4 py-3 font-medium text-slate-700 dark:text-slate-300">{{ item.medication_name }}</td>
+                        <td class="px-4 py-3 text-slate-600 dark:text-slate-400">{{ item.dosage }}</td>
+                        <td class="px-4 py-3 text-slate-600 dark:text-slate-400">{{ item.frequency }}</td>
+                        <td class="px-4 py-3 text-slate-600 dark:text-slate-400">{{ item.duration }}</td>
+                        <td class="px-4 py-3 text-slate-500 dark:text-slate-400">{{ item.notes|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-slate-500 dark:text-slate-400">No medications listed.</p>
+        {% endif %}
+    </div>
+
+    <!-- Instructions -->
+    {% if prescription.instructions %}
+    <div class="glass rounded-xl p-6 mb-6">
+        <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300 mb-2">
+            <i class="fas fa-clipboard-list text-indigo-500 mr-2"></i>Instructions
+        </h3>
+        <p class="text-slate-600 dark:text-slate-400 whitespace-pre-wrap">{{ prescription.instructions }}</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

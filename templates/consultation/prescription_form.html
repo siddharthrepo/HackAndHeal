@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}New Prescription{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4">
+    <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-slate-800 dark:text-white">
+            <i class="fas fa-prescription text-indigo-500 mr-2"></i>New Prescription
+        </h2>
+        <a href="{% url 'appointment_detail' appointment.pk %}" class="text-indigo-500 hover:text-indigo-600 text-sm font-medium">
+            <i class="fas fa-arrow-left mr-1"></i> Back
+        </a>
+    </div>
+
+    <div class="glass rounded-xl p-4 mb-6 text-sm text-slate-600 dark:text-slate-400">
+        <strong>Patient:</strong> {{ appointment.patient.get_full_name }} &nbsp;|&nbsp;
+        <strong>Date:</strong> {{ appointment.appointment_date }}
+    </div>
+
+    <form method="post" id="prescription-form">
+        {% csrf_token %}
+
+        <!-- Diagnosis & Instructions -->
+        <div class="glass rounded-xl p-6 mb-6 space-y-4">
+            <div>
+                <label class="form-label">Diagnosis *</label>
+                {{ form.diagnosis }}
+                {% for error in form.diagnosis.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+            </div>
+            <div>
+                <label class="form-label">Instructions</label>
+                {{ form.instructions }}
+            </div>
+            <div>
+                <label class="form-label">Doctor Signature Text</label>
+                {{ form.doctor_signature_text }}
+                <p class="text-xs text-slate-400 mt-1">Appears on the PDF (e.g. "Dr. Sharma, MBBS, MD")</p>
+            </div>
+        </div>
+
+        <!-- Medication Items -->
+        <div class="glass rounded-xl p-6 mb-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-slate-700 dark:text-slate-300">
+                    <i class="fas fa-pills text-indigo-500 mr-2"></i>Medications
+                </h3>
+                <button type="button" id="add-item-btn" class="text-sm text-indigo-500 hover:text-indigo-600 font-medium">
+                    <i class="fas fa-plus mr-1"></i> Add Medication
+                </button>
+            </div>
+
+            {{ formset.management_form }}
+
+            <div id="formset-container">
+                {% for item_form in formset %}
+                <div class="medication-row border border-slate-200 dark:border-slate-700 rounded-lg p-4 mb-3 {% if item_form.DELETE.value %}hidden{% endif %}">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                        {% for hidden in item_form.hidden_fields %}{{ hidden }}{% endfor %}
+                        <div>
+                            <label class="form-label text-xs">Medication Name *</label>
+                            {{ item_form.medication_name }}
+                            {% for error in item_form.medication_name.errors %}<p class="form-error">{{ error }}</p>{% endfor %}
+                        </div>
+                        <div>
+                            <label class="form-label text-xs">Dosage *</label>
+                            {{ item_form.dosage }}
+                        </div>
+                        <div>
+                            <label class="form-label text-xs">Frequency *</label>
+                            {{ item_form.frequency }}
+                        </div>
+                        <div>
+                            <label class="form-label text-xs">Duration *</label>
+                            {{ item_form.duration }}
+                        </div>
+                        <div>
+                            <label class="form-label text-xs">Notes</label>
+                            {{ item_form.notes }}
+                        </div>
+                        <div class="flex items-end">
+                            <button type="button" class="remove-item-btn text-red-500 hover:text-red-600 text-sm font-medium pb-2.5">
+                                <i class="fas fa-trash mr-1"></i> Remove
+                            </button>
+                            <div class="hidden">{{ item_form.DELETE }}</div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            {% if formset.non_form_errors %}
+            <div class="text-red-500 text-sm mt-2">
+                {% for error in formset.non_form_errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            </div>
+            {% endif %}
+        </div>
+
+        <button type="submit" class="c360-btn-primary px-8 py-3 text-base">
+            <i class="fas fa-save mr-2"></i> Save Prescription
+        </button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    const container = document.getElementById('formset-container');
+    const totalFormsInput = document.getElementById('id_items-TOTAL_FORMS');
+    const addBtn = document.getElementById('add-item-btn');
+
+    addBtn.addEventListener('click', function() {
+        const total = parseInt(totalFormsInput.value);
+        // Clone the first medication row
+        const firstRow = container.querySelector('.medication-row');
+        if (!firstRow) return;
+        const newRow = firstRow.cloneNode(true);
+        newRow.classList.remove('hidden');
+
+        // Update all input names/ids
+        newRow.querySelectorAll('input, select, textarea').forEach(function(el) {
+            if (el.name) {
+                el.name = el.name.replace(/-\d+-/, '-' + total + '-');
+                el.id = el.id.replace(/-\d+-/, '-' + total + '-');
+                if (el.type === 'checkbox') {
+                    el.checked = false;
+                } else {
+                    el.value = '';
+                }
+            }
+        });
+
+        container.appendChild(newRow);
+        totalFormsInput.value = total + 1;
+        bindRemoveButtons();
+    });
+
+    function bindRemoveButtons() {
+        container.querySelectorAll('.remove-item-btn').forEach(function(btn) {
+            btn.onclick = function() {
+                const row = btn.closest('.medication-row');
+                const deleteCheckbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+                if (deleteCheckbox) {
+                    deleteCheckbox.checked = true;
+                    row.classList.add('hidden');
+                } else {
+                    row.remove();
+                    // Update total forms count
+                    totalFormsInput.value = container.querySelectorAll('.medication-row').length;
+                }
+            };
+        });
+    }
+
+    bindRemoveButtons();
+})();
+</script>
+{% endblock %}

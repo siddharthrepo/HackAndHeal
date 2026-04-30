@@ -98,6 +98,7 @@ else:
 # Allow all origins for CSRF (not recommended for production)
 # Use environment variable to add specific origins when needed
 CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else []
+CSRF_TRUSTED_ORIGINS += ['https://bcca-117-55-241-163.ngrok-free.app']
 
 ROOT_URLCONF = 'chikitsa360.urls'
 WSGI_APPLICATION = 'chikitsa360.wsgi.application'
@@ -203,6 +204,13 @@ DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', '')
 
 # OpenAI settings (for Whisper)
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+
+# Groq LLM settings (SOAP Notes)
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')
+
+# Reminder cron token
+REMINDER_CRON_TOKEN = os.environ.get('REMINDER_CRON_TOKEN', '')
 
 # INSTALLED_APPS += ['csp']
 

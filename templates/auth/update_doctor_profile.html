@@ -1,61 +1,64 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 
-{% block title %}Update Doctor Profile{% endblock %}
+{% block title %}Update Doctor Profile - HealthMeter{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
-  <div class="c360-card border border-gray-200">
+<section class="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-700 dark:from-indigo-900 dark:via-slate-900 dark:to-slate-950 py-10 text-white">
+  <div class="max-w-4xl mx-auto px-4">
+    <h1 class="text-3xl font-bold">Update Doctor Profile</h1>
+    <p class="mt-2 text-indigo-100 text-sm">Keep your professional information up to date.</p>
+  </div>
+</section>
 
-    <!-- Header -->
-    <div class="border-b px-6 py-4">
-      <h2 class="text-2xl font-semibold text-gray-800 text-center">Update Doctor Profile</h2>
-    </div>
+<section class="max-w-4xl mx-auto px-4 py-10">
+  <div class="glass-strong rounded-2xl p-6">
 
     <!-- Flash messages -->
-    <div class="px-6 pt-6">
-      {% if messages %}
+    {% if messages %}
+      <div class="mb-6">
         {% for message in messages %}
-          <div class="mb-4 px-4 py-3 rounded text-sm 
-                      {% if message.tags == 'success' %}bg-green-50 text-green-700 border border-green-200
-                      {% elif message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200
-                      {% else %}bg-blue-50 text-blue-700 border border-blue-200
+          <div class="px-4 py-3 rounded-xl text-sm mb-3
+                      {% if message.tags == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/20 dark:text-emerald-400 dark:border-emerald-800
+                      {% elif message.tags == 'error' %}bg-red-50 text-red-700 border border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800
+                      {% else %}bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-900/20 dark:text-indigo-400 dark:border-indigo-800
                       {% endif %}">
             {{ message }}
           </div>
         {% endfor %}
-      {% endif %}
-    </div>
+      </div>
+    {% endif %}
 
     <!-- Form -->
-    <form method="post" novalidate class="px-6 py-8">
+    <form method="post" novalidate class="space-y-6">
       {% csrf_token %}
-      {{ form.non_field_errors }}
+      {% include "partials/form_errors.html" with form=form %}
 
       <div class="space-y-6">
         {% for field in form %}
           <div>
-            <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
-            
+            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+
             {% if field.widget_type == 'textarea' %}
-              {{ field|add_class:"w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm h-28 resize-none focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500" }}
+              {{ field|add_class:"form-textarea h-28 resize-none" }}
             {% else %}
-              {{ field|add_class:"w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500" }}
+              {{ field|add_class:"form-input" }}
             {% endif %}
-            
+
             {% if field.errors %}
-              <p class="text-red-600 text-sm mt-1">{{ field.errors.0 }}</p>
+              <p class="text-red-500 dark:text-red-400 text-sm mt-1">{{ field.errors.0 }}</p>
             {% endif %}
           </div>
         {% endfor %}
       </div>
 
-      <div class="mt-8">
-        <button type="submit" class="c360-btn-primary w-full text-center">
-          Save Profile
+      <div class="flex justify-end space-x-4 pt-6">
+        <button type="submit" class="c360-btn-primary">
+          <i class="fas fa-save mr-2"></i> Save Profile
         </button>
+        <a href="{% url 'profile' %}" class="c360-btn-secondary">Cancel</a>
       </div>
     </form>
   </div>
-</div>
+</section>
 {% endblock %}

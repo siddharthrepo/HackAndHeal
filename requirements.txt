@@ -16,3 +16,6 @@ gunicorn
 dj-database-url
 whitenoise
 django-csp
+langchain-groq
+langchain-core
+reportlab

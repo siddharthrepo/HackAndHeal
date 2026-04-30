@@ -1,5 +1,5 @@
 /**
- * Chikitsa360 Animations
+ * HealthMeter Animations
  * Custom animations for a modern healthcare experience
  */
 

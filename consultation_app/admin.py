@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Availability, Appointment, Service, Testimonial, HealthTip
+from .models import Availability, Appointment, Service, Testimonial, HealthTip, Prescription, PrescriptionItem, FollowUp
 
 @admin.register(Availability)
 class AvailabilityAdmin(admin.ModelAdmin):
@@ -44,3 +44,22 @@ class HealthTipAdmin(admin.ModelAdmin):
     search_fields = ('title', 'content', 'author__email')
     list_editable = ('is_featured',)
     ordering = ('-is_featured', '-created_at')
+
+class PrescriptionItemInline(admin.TabularInline):
+    model = PrescriptionItem
+    extra = 1
+
+@admin.register(Prescription)
+class PrescriptionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'appointment', 'diagnosis', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('appointment__patient__email', 'appointment__doctor__email', 'diagnosis')
+    readonly_fields = ('id', 'created_at', 'updated_at')
+    inlines = [PrescriptionItemInline]
+
+@admin.register(FollowUp)
+class FollowUpAdmin(admin.ModelAdmin):
+    list_display = ('id', 'appointment', 'follow_up_date', 'reminder_sent', 'created_at')
+    list_filter = ('follow_up_date', 'reminder_sent')
+    search_fields = ('appointment__patient__email', 'appointment__doctor__email')
+    readonly_fields = ('id', 'created_at', 'updated_at')

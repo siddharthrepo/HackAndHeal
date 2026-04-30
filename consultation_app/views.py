@@ -18,7 +18,8 @@ from django.core.exceptions import PermissionDenied
 from auth_app.models import User, DoctorProfile
 from auth_app.mixins import PatientRequiredMixin, DoctorRequiredMixin
 from .models import Availability, Appointment, Service, Testimonial, HealthTip
-from .forms import AvailabilityForm, AppointmentForm, DoctorSearchForm
+from .forms import AvailabilityForm, AppointmentForm, DoctorSearchForm, PrescriptionForm, PrescriptionItemFormSet, FollowUpForm
+from .models import Prescription, FollowUp
 from payment_app.models import Payment
 
 class HomeView(TemplateView):
@@ -349,7 +350,30 @@ class AppointmentDetailView(LoginRequiredMixin, DetailView):
             context['payment'] = Payment.objects.get(appointment=self.object)
         except Payment.DoesNotExist:
             context['payment'] = None
-        
+
+        # SOAP Note
+        try:
+            context['soap_note'] = self.object.soap_note
+        except Exception:
+            context['soap_note'] = None
+
+        # Transcription
+        try:
+            context['transcription'] = self.object.transcription
+        except Exception:
+            context['transcription'] = None
+
+        # Prescriptions
+        context['prescriptions'] = self.object.prescriptions.all()
+
+        # Follow-up
+        try:
+            context['follow_up'] = self.object.follow_up
+        except Exception:
+            context['follow_up'] = None
+
+        context['follow_up_form'] = FollowUpForm(instance=context['follow_up']) if self.request.user == self.object.doctor else None
+
         context['is_doctor'] = self.request.user.is_doctor()
         context['is_patient'] = self.request.user.is_patient()
         return context
@@ -372,7 +396,7 @@ class JoinConsultationView(LoginRequiredMixin, View):
         if not appointment.video_room_id:
             room_name = appointment.video_room_id
             try:
-                room_name = f"chikitsa360-{uuid.uuid4().hex}"
+                room_name = f"healthmeter-{uuid.uuid4().hex}"
                 daily_api_key = settings.DAILY_API_KEY
 
                 headers = {
@@ -419,9 +443,10 @@ class JoinConsultationView(LoginRequiredMixin, View):
 
             data = {
                 "properties": {
-                    "start_audio_off": True,  
-                    "start_video_off": True,  
-                    "exp": int((timezone.now() + timedelta(hours=2)).timestamp()),  
+                    "room_name": appointment.video_room_id,
+                    "start_audio_off": False,
+                    "start_video_off": False,
+                    "exp": int((timezone.now() + timedelta(hours=2)).timestamp()),
                 }
             }
 
@@ -573,3 +598,126 @@ class CancelAppointmentView(LoginRequiredMixin, View):
             return redirect('patient_appointments')
         else:
             return redirect('doctor_appointments')
+
+
+class PrescriptionCreateView(LoginRequiredMixin, DoctorRequiredMixin, View):
+    def get(self, request, appointment_id):
+        appointment = get_object_or_404(Appointment, pk=appointment_id)
+        if request.user != appointment.doctor:
+            raise PermissionDenied("Only the doctor for this appointment can create prescriptions.")
+
+        form = PrescriptionForm()
+        formset = PrescriptionItemFormSet()
+        return render(request, 'consultation/prescription_form.html', {
+            'appointment': appointment,
+            'form': form,
+            'formset': formset,
+        })
+
+    def post(self, request, appointment_id):
+        appointment = get_object_or_404(Appointment, pk=appointment_id)
+        if request.user != appointment.doctor:
+            raise PermissionDenied("Only the doctor for this appointment can create prescriptions.")
+
+        form = PrescriptionForm(request.POST)
+        if form.is_valid():
+            prescription = form.save(commit=False)
+            prescription.appointment = appointment
+            prescription.save()
+
+            formset = PrescriptionItemFormSet(request.POST, instance=prescription)
+            if formset.is_valid():
+                items = formset.save(commit=False)
+                for idx, item in enumerate(items):
+                    item.order = idx
+                    item.save()
+                # Handle deleted items
+                for obj in formset.deleted_objects:
+                    obj.delete()
+                messages.success(request, "Prescription created successfully.")
+                return redirect('prescription_detail', pk=prescription.pk)
+            else:
+                # Formset invalid, delete the prescription we just created
+                prescription.delete()
+        else:
+            formset = PrescriptionItemFormSet(request.POST)
+
+        return render(request, 'consultation/prescription_form.html', {
+            'appointment': appointment,
+            'form': form,
+            'formset': formset,
+        })
+
+
+class PrescriptionDetailView(LoginRequiredMixin, DetailView):
+    model = Prescription
+    template_name = 'consultation/prescription_detail.html'
+    context_object_name = 'prescription'
+
+    def get_object(self, queryset=None):
+        obj = super().get_object(queryset)
+        appointment = obj.appointment
+        if self.request.user != appointment.doctor and self.request.user != appointment.patient:
+            raise PermissionDenied("You don't have permission to view this prescription.")
+        return obj
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['appointment'] = self.object.appointment
+        context['items'] = self.object.items.all()
+        return context
+
+
+class PrescriptionPDFView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        from django.http import HttpResponse
+        prescription = get_object_or_404(Prescription, pk=pk)
+        appointment = prescription.appointment
+
+        if request.user != appointment.doctor and request.user != appointment.patient:
+            raise PermissionDenied("You don't have permission to download this prescription.")
+
+        from .pdf_service import PrescriptionPDFService
+        pdf_bytes = PrescriptionPDFService.generate_pdf(prescription)
+
+        response = HttpResponse(pdf_bytes, content_type='application/pdf')
+        filename = f"prescription_{appointment.patient.get_full_name().replace(' ', '_')}_{prescription.created_at.strftime('%Y%m%d')}.pdf"
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+
+class FollowUpCreateView(LoginRequiredMixin, DoctorRequiredMixin, View):
+    def post(self, request, appointment_id):
+        appointment = get_object_or_404(Appointment, pk=appointment_id)
+        if request.user != appointment.doctor:
+            raise PermissionDenied("Only the doctor can set follow-up.")
+
+        try:
+            follow_up = appointment.follow_up
+            form = FollowUpForm(request.POST, instance=follow_up)
+        except FollowUp.DoesNotExist:
+            form = FollowUpForm(request.POST)
+
+        if form.is_valid():
+            follow_up = form.save(commit=False)
+            follow_up.appointment = appointment
+            follow_up.reminder_sent = False  # Reset if date changed
+            follow_up.save()
+            messages.success(request, "Follow-up scheduled successfully.")
+        else:
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{error}")
+
+        return redirect('appointment_detail', pk=appointment.pk)
+
+
+class TriggerRemindersView(View):
+    def get(self, request):
+        from django.core.management import call_command
+        token = request.GET.get('token', '')
+        if token != settings.REMINDER_CRON_TOKEN or not token:
+            return JsonResponse({'error': 'Unauthorized'}, status=403)
+
+        call_command('send_reminders')
+        return JsonResponse({'status': 'ok', 'message': 'Reminders sent'})
