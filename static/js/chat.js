@@ -1,5 +1,5 @@
 /**
- * Chat functionality for Chikitsa360
+ * Chat functionality for HealthMeter
  * Implements WebSocket-based real-time chat
  */
 

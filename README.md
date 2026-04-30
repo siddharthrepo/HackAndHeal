@@ -80,78 +80,28 @@ Chikitsa360/
 └── chikitsa360/       # Project settings
 ```
 
-### Technology Stack
-- **Backend**: Django, Django Channels, PostgreSQL
-- **Frontend**: HTML5, CSS3, JavaScript, Bootstrap 5
-- **WebSockets**: Django Channels, ASGI for real-time features
-- **Video API**: Daily.co for WebRTC implementation
-- **Transcription**: Deepgram for real-time speech-to-text
-- **Payments**: Razorpay integration (in progress)
-- **Email**: SMTP integration for transcription mailing
-- **Deployment**: Koyeb-ready
+### Environment Variables
 
-## 🚀 **Installation & Setup**
+| Variable | Description |
+|----------|-------------|
+| `SECRET_KEY` | Django secret key |
+| `DEBUG` | `True` / `False` |
+| `DATABASE_URL` | PostgreSQL connection string (production) |
+| `DAILY_API_KEY` | Daily.co API key for video rooms |
+| `DEEPGRAM_API_KEY` | Deepgram API key for transcription |
+| `GROQ_API_KEY` | Groq API key for SOAP note generation |
+| `GROQ_MODEL` | Groq model name (default: `llama-3.3-70b-versatile`) |
+| `RAZORPAY_KEY_ID` | Razorpay key ID |
+| `RAZORPAY_KEY_SECRET` | Razorpay key secret |
+| `REMINDER_CRON_TOKEN` | Token for the reminder trigger endpoint |
 
-### Prerequisites
-- Python 3.9+
-- PostgreSQL
-- API keys for Daily.co, Deepgram, and Razorpay
+### Running Reminders
 
-### Quick Start
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/siddharthrepo/HackAndHeal.git
-   cd HackAndHeal
-   ```
+Set up a cron job or external scheduler to call:
 
-2. **Set up virtual environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # Windows: venv\Scripts\activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Configure environment variables**
-   Create a `.env` file with the following:
-   ```
-   SECRET_KEY=your-secret-key
-   DEBUG=True
-   PGDATABASE=chikitsa360
-   PGUSER=postgres
-   PGPASSWORD=your-password
-   PGHOST=localhost
-   PGPORT=5432
-   RAZORPAY_KEY_ID=your-razorpay-key
-   RAZORPAY_KEY_SECRET=your-razorpay-secret
-   DAILY_API_KEY=your-daily-api-key
-   DEEPGRAM_API_KEY=your-deepgram-api-key
-   ```
-
-5. **Run migrations**
-   ```bash
-   python manage.py migrate
-   ```
-
-6. **Create superuser**
-   ```bash
-   python manage.py createsuperuser
-   ```
-
-7. **Start development server**
-   ```bash
-   python manage.py runserver
-   ```
-
-8. **Access the application**
-   Open your browser and navigate to `http://127.0.0.1:8000`
-
-## 📊 **Use Case Implementation**
-
-Our solution directly addresses the Veersa Hackathon Use Case 2 requirements:
+```bash
+# Via management command
+python manage.py send_reminders
 
 1. ✅ **Instant access to health consultation** - Implemented through our intuitive user flow from registration to video consultation
 
@@ -177,59 +127,18 @@ Our solution directly addresses the Veersa Hackathon Use Case 2 requirements:
 
 ## 🏛️ **Information Architecture**
 
-Our platform follows a user-centered information architecture designed for intuitive navigation:
+## Project Structure
 
 ```
-Chikitsa360
-├── Public Area
-│   ├── Home Page
-│   ├── Doctor Directory
-│   ├── Specialties
-│   ├── How It Works
-│   ├── Pricing
-│   ├── FAQs
-│   ├── About Us
-│   ├── Contact
-│   ├── Blog
-│   ├── Login
-│   └── Register
-│
-├── Patient Portal
-│   ├── Dashboard
-│   ├── My Profile
-│   │   └── Personal Information
-│   ├── Appointments
-│   │   ├── Upcoming
-│   │   ├── Past
-│   │   └── Book New
-│   ├── Consultations
-│   │   ├── Join Video Call
-│   │   ├── Chat History
-│   │   └── Transcripts
-│   └── Help & Support
-│
-├── Doctor Portal
-│   ├── Dashboard
-│   ├── My Profile
-│   │   ├── Professional Details
-│   │   ├── Schedule Management
-│   │   └── Account Settings
-│   ├── Patient Management
-│   ├── Appointments
-│   │   ├── Today's Schedule
-│   │   ├── Upcoming
-│   │   └── Past
-│   └── Consultations
-│       └── Start Video Call
-|
-└── Admin Panel
-    ├── User Management
-    ├── Doctor Verification
-    ├── Specialty Management
-    ├── Appointment Overview
-    ├── Payment Processing
-    ├── System Logs
-    └── Settings
+chikitsa360/
+├── auth_app/          # User auth, profiles, roles
+├── consultation_app/  # Appointments, availability, prescriptions, follow-ups, reminders
+├── payment_app/       # Razorpay payment processing
+├── chat_app/          # WebSocket real-time chat
+├── transcription_app/ # Deepgram transcription, AI SOAP notes
+├── templates/         # Django templates
+├── static/            # CSS, JS, images
+└── chikitsa360/       # Project settings & URLs
 ```
 
 The architecture ensures that users can quickly locate needed information with minimal clicks, following a logical flow from registration through consultation and follow-up care.

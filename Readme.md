@@ -1,6 +1,6 @@
-# 🩺 Chikitsa360 – Telemedicine & Consultation Platform
+# 🩺 HealthMeter – Telemedicine & Consultation Platform
 
-Chikitsa360 is a full-stack Django-based telemedicine web application enabling patients and doctors to interact via real-time video consultations, with post-call transcripts, secure authentication, and integrated payment processing.
+HealthMeter is a full-stack Django-based telemedicine web application enabling patients and doctors to interact via real-time video consultations, with post-call transcripts, secure authentication, and integrated payment processing.
 
 ## 🚀 Features
 

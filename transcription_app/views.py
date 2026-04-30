@@ -8,8 +8,9 @@ from django.core.exceptions import PermissionDenied
 from django.utils import timezone
 from django.contrib import messages
 from consultation_app.models import Appointment
-from .models import Transcription
+from .models import Transcription, SOAPNote
 from .services import TranscriptionService
+from .forms import SOAPNoteEditForm
 
 class TranscriptionCreateView(LoginRequiredMixin, View):
     """
@@ -34,6 +35,14 @@ class TranscriptionCreateView(LoginRequiredMixin, View):
                 appointment=appointment,
                 defaults={'status': Transcription.Status.PENDING}
             )
+
+            # If already completed, don't re-process (second participant may also submit)
+            if transcription.status == Transcription.Status.COMPLETED:
+                return JsonResponse({
+                    'success': True,
+                    'message': 'Transcription already completed',
+                    'transcription_id': str(transcription.id)
+                })
 
             if transcription.status == Transcription.Status.FAILED:
                 transcription.status = Transcription.Status.PENDING
@@ -102,3 +111,74 @@ class TranscriptionDetailView(LoginRequiredMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context['appointment'] = self.object.appointment
         return context
+
+
+class SOAPNoteDetailView(LoginRequiredMixin, View):
+    def get(self, request, pk):
+        soap_note = get_object_or_404(SOAPNote, pk=pk)
+        appointment = soap_note.appointment
+
+        if request.user != appointment.doctor and request.user != appointment.patient:
+            raise PermissionDenied("You don't have permission to view this SOAP note.")
+
+        is_doctor = request.user == appointment.doctor
+        form = SOAPNoteEditForm(instance=soap_note) if is_doctor else None
+
+        return render(request, 'transcription/soap_note_detail.html', {
+            'soap_note': soap_note,
+            'appointment': appointment,
+            'is_doctor': is_doctor,
+            'form': form,
+        })
+
+
+class SOAPNoteEditView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        soap_note = get_object_or_404(SOAPNote, pk=pk)
+        appointment = soap_note.appointment
+
+        if request.user != appointment.doctor:
+            raise PermissionDenied("Only the doctor can edit SOAP notes.")
+
+        form = SOAPNoteEditForm(request.POST, instance=soap_note)
+        if form.is_valid():
+            soap_note = form.save(commit=False)
+            soap_note.is_edited = True
+            soap_note.save()
+            messages.success(request, "SOAP note updated successfully.")
+            return redirect('soap_note_detail', pk=soap_note.pk)
+
+        return render(request, 'transcription/soap_note_detail.html', {
+            'soap_note': soap_note,
+            'appointment': appointment,
+            'is_doctor': True,
+            'form': form,
+        })
+
+
+class SOAPNoteRegenerateView(LoginRequiredMixin, View):
+    def post(self, request, appointment_id):
+        appointment = get_object_or_404(Appointment, pk=appointment_id)
+
+        if request.user != appointment.doctor:
+            raise PermissionDenied("Only the doctor can regenerate SOAP notes.")
+
+        try:
+            transcription = appointment.transcription
+        except Transcription.DoesNotExist:
+            messages.error(request, "No transcription found for this appointment.")
+            return redirect('appointment_detail', pk=appointment.pk)
+
+        if transcription.status != Transcription.Status.COMPLETED:
+            messages.error(request, "Transcription is not completed yet.")
+            return redirect('appointment_detail', pk=appointment.pk)
+
+        # Delete existing SOAP note if any
+        SOAPNote.objects.filter(appointment=appointment).delete()
+
+        # Regenerate in background
+        from .soap_service import SOAPNoteService
+        SOAPNoteService.generate_in_background(transcription)
+
+        messages.success(request, "SOAP note regeneration started. Please refresh in a few moments.")
+        return redirect('appointment_detail', pk=appointment.pk)

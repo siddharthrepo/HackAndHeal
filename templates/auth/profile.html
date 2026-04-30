@@ -1,38 +1,38 @@
 {% extends "base.html" %}
 
-{% block title %}My Profile - Chikitsa360{% endblock %}
+{% block title %}My Profile - HealthMeter{% endblock %}
 
 {% block content %}
-<section class="bg-gradient-to-r from-[var(--primary-teal)] to-[var(--primary-dark)] py-10 text-white">
+<section class="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-700 dark:from-indigo-900 dark:via-slate-900 dark:to-slate-950 py-10 text-white">
   <div class="max-w-4xl mx-auto px-4">
     <h1 class="text-3xl font-bold">My Profile</h1>
-    <p class="mt-2 text-[var(--primary-light)] text-sm">View your profile details below.</p>
+    <p class="mt-2 text-indigo-100 text-sm">View your profile details below.</p>
   </div>
 </section>
 
 <section class="max-w-4xl mx-auto px-4 py-10">
-  <div class="c360-card p-6 border border-gray-200 space-y-6">
+  <div class="glass-strong rounded-2xl p-6 space-y-6">
     <!-- Profile Picture and Name -->
     <div class="flex items-center space-x-6">
       {% if profile.profile_picture %}
-        <img src="{{ profile.profile_picture }}" alt="Profile Picture" class="w-20 h-20 rounded-full object-cover border-2 border-[var(--primary-teal)] shadow-sm">
+        <img src="{{ profile.profile_picture }}" alt="Profile Picture" class="w-20 h-20 rounded-full object-cover border-2 border-indigo-500 shadow-sm">
       {% else %}
-        <div class="w-20 h-20 rounded-full bg-[var(--primary-light)] text-[var(--primary-teal)] flex items-center justify-center text-xl font-semibold shadow-sm">
+        <div class="w-20 h-20 rounded-full bg-indigo-100 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 flex items-center justify-center text-xl font-semibold shadow-sm">
           {{ user.get_full_name|default:user.email|slice:":2"|upper }}
         </div>
       {% endif %}
       <div>
-        <h2 class="text-xl font-semibold text-gray-800">{{ user.get_full_name|default:user.email }}</h2>
-        <p class="text-sm text-gray-500">{{ user.email }}</p>
-        <p class="text-sm mt-1 text-[var(--primary-teal)] font-medium">{{ user.get_role_display }}</p>
+        <h2 class="text-xl font-semibold text-slate-800 dark:text-white">{{ user.get_full_name|default:user.email }}</h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400">{{ user.email }}</p>
+        <p class="text-sm mt-1 text-indigo-500 dark:text-indigo-400 font-medium">{{ user.get_role_display }}</p>
       </div>
     </div>
 
     <!-- Profile Details -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-      <p><span class="font-medium">Phone:</span> {{ profile.phone_number|default:"—" }}</p>
-      <p><span class="font-medium">Date of Birth:</span> {{ profile.date_of_birth|date:"F j, Y"|default:"—" }}</p>
-      <p class="md:col-span-2"><span class="font-medium">Address:</span> {{ profile.address|default:"—" }}</p>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-slate-600 dark:text-slate-400">
+      <p><span class="font-medium text-slate-700 dark:text-slate-300">Phone:</span> {{ profile.phone_number|default:"—" }}</p>
+      <p><span class="font-medium text-slate-700 dark:text-slate-300">Date of Birth:</span> {{ profile.date_of_birth|date:"F j, Y"|default:"—" }}</p>
+      <p class="md:col-span-2"><span class="font-medium text-slate-700 dark:text-slate-300">Address:</span> {{ profile.address|default:"—" }}</p>
     </div>
 
     <!-- Edit Button -->

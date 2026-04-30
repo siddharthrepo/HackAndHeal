@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
+        <div style="background: linear-gradient(135deg, #059669, #10B981); padding: 24px; text-align: center;">
+            <h1 style="color: white; margin: 0; font-size: 22px;">Follow-Up Reminder</h1>
+        </div>
+        <div style="padding: 24px;">
+            <p style="color: #334155; font-size: 16px;">Hello <strong>{{ patient_name }}</strong>,</p>
+            <p style="color: #475569; font-size: 15px;">
+                Your doctor, <strong>Dr. {{ doctor_name }}</strong>, recommended a follow-up visit. Today is the scheduled follow-up date.
+            </p>
+            <div style="background: #ECFDF5; border-left: 4px solid #059669; padding: 16px; border-radius: 0 8px 8px 0; margin: 20px 0;">
+                <p style="margin: 4px 0; color: #065F46;"><strong>Original Consultation:</strong> {{ original_date }}</p>
+                <p style="margin: 4px 0; color: #065F46;"><strong>Follow-Up Date:</strong> {{ follow_up_date }}</p>
+                {% if notes %}
+                <p style="margin: 8px 0 4px; color: #065F46;"><strong>Doctor's Notes:</strong></p>
+                <p style="margin: 4px 0; color: #047857;">{{ notes }}</p>
+                {% endif %}
+            </div>
+            <p style="color: #475569; font-size: 14px;">Please visit <strong>HealthMeter</strong> to schedule your follow-up appointment with Dr. {{ doctor_name }}.</p>
+            <p style="color: #94A3B8; font-size: 13px; margin-top: 24px;">— HealthMeter Team</p>
+        </div>
+    </div>
+</body>
+</html>

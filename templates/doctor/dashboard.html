@@ -1,38 +1,38 @@
 {% extends 'base.html' %}
 
-{% block title %}Doctor Dashboard - Chikitsa360{% endblock %}
+{% block title %}Doctor Dashboard - HealthMeter{% endblock %}
 
 {% block content %}
-<section class="bg-gradient-to-r from-[var(--primary-teal)] to-[var(--primary-dark)] text-white py-10">
+<section class="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-700 dark:from-indigo-900 dark:via-slate-900 dark:to-slate-950 text-white py-10">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <h1 class="text-3xl font-bold">Welcome, Dr. {{ user.get_full_name|default:user.email }}</h1>
-    <p class="mt-2 text-[var(--primary-light)] text-sm sm:text-base">Manage your appointments, patients, and availability efficiently.</p>
+    <p class="mt-2 text-indigo-100 text-sm sm:text-base">Manage your appointments, patients, and availability efficiently.</p>
   </div>
 </section>
 
 <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
   <!-- Dashboard Stats -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-    <div class="c360-card p-6">
+    <div class="glass rounded-xl p-6">
       <div class="flex items-center">
-        <div class="bg-[var(--primary-light)] text-[var(--primary-teal)] rounded-full p-3 mr-4">
+        <div class="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 rounded-full p-3 mr-4">
           <i class="fas fa-calendar-check text-2xl"></i>
         </div>
         <div>
-          <p class="text-sm text-gray-500">Today's Appointments</p>
-          <h3 class="text-2xl font-bold text-gray-800">{{ user.doctor_appointments.count|default:"0" }}</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Today's Appointments</p>
+          <h3 class="text-2xl font-bold text-slate-800 dark:text-white">{{ user.doctor_appointments.count|default:"0" }}</h3>
         </div>
       </div>
     </div>
 
-    <div class="c360-card p-6">
+    <div class="glass rounded-xl p-6">
       <div class="flex items-center">
-        <div class="bg-green-100 text-green-600 rounded-full p-3 mr-4">
+        <div class="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-500 dark:text-emerald-400 rounded-full p-3 mr-4">
           <i class="fas fa-user-injured text-2xl"></i>
         </div>
         <div>
-          <p class="text-sm text-gray-500">Total Patients</p>
-          <h3 class="text-2xl font-bold text-gray-800">
+          <p class="text-sm text-slate-500 dark:text-slate-400">Total Patients</p>
+          <h3 class="text-2xl font-bold text-slate-800 dark:text-white">
             {% with count=user.doctor_appointments.values_list.count %}
               {{ count|default:"0" }}
             {% endwith %}
@@ -41,14 +41,14 @@
       </div>
     </div>
 
-    <div class="c360-card p-6">
+    <div class="glass rounded-xl p-6">
       <div class="flex items-center">
-        <div class="bg-purple-100 text-purple-600 rounded-full p-3 mr-4">
+        <div class="bg-violet-100 dark:bg-violet-900/30 text-violet-500 dark:text-violet-400 rounded-full p-3 mr-4">
           <i class="fas fa-notes-medical text-2xl"></i>
         </div>
         <div>
-          <p class="text-sm text-gray-500">Completed Sessions</p>
-          <h3 class="text-2xl font-bold text-gray-800">
+          <p class="text-sm text-slate-500 dark:text-slate-400">Completed Sessions</p>
+          <h3 class="text-2xl font-bold text-slate-800 dark:text-white">
             {% with count=user.doctor_appointments.filter.count %}
               {{ count|default:"0" }}
             {% endwith %}
@@ -57,14 +57,14 @@
       </div>
     </div>
 
-    <div class="c360-card p-6">
+    <div class="glass rounded-xl p-6">
       <div class="flex items-center">
-        <div class="bg-yellow-100 text-yellow-600 rounded-full p-3 mr-4">
+        <div class="bg-amber-100 dark:bg-amber-900/30 text-amber-500 dark:text-amber-400 rounded-full p-3 mr-4">
           <i class="fas fa-wallet text-2xl"></i>
         </div>
         <div>
-          <p class="text-sm text-gray-500">Total Earnings</p>
-          <h3 class="text-2xl font-bold text-gray-800">₹{{ user.doctor_profile.consultation_fee|default:"0" }}</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">Total Earnings</p>
+          <h3 class="text-2xl font-bold text-slate-800 dark:text-white">₹{{ user.doctor_profile.consultation_fee|default:"0" }}</h3>
         </div>
       </div>
     </div>
@@ -72,28 +72,28 @@
 
   <!-- Appointments and Sidebar -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-    <!-- Main Section (Appointments) -->
+    <!-- Main Section -->
     <div class="md:col-span-2 space-y-6">
       <!-- Today's Appointments -->
-      <div class="c360-card">
-        <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-gray-800">Today's Appointments</h2>
-          <a href="{% url 'doctor_appointments' %}" class="text-sm text-[var(--primary-teal)] hover:text-[var(--primary-dark)]">View all</a>
+      <div class="glass rounded-xl">
+        <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-slate-800 dark:text-white">Today's Appointments</h2>
+          <a href="{% url 'doctor_appointments' %}" class="text-sm text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">View all</a>
         </div>
         <div class="px-6 py-4">
           {% with today_appointments=user.doctor_appointments.all|slice:":5" %}
             {% if today_appointments %}
               <ul class="space-y-4">
                 {% for appointment in today_appointments %}
-                <li class="flex justify-between items-start border-b pb-4 {% if forloop.last %}border-b-0 pb-0{% endif %}">
+                <li class="flex justify-between items-start border-b border-slate-100 dark:border-slate-700 pb-4 {% if forloop.last %}border-b-0 pb-0{% endif %}">
                   <div class="flex items-center space-x-4">
-                    <div class="h-12 w-12 rounded-full bg-[var(--primary-light)] text-[var(--primary-teal)] flex items-center justify-center font-semibold">
+                    <div class="h-12 w-12 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-500 dark:text-indigo-400 flex items-center justify-center font-semibold">
                       {{ appointment.patient.get_full_name|default:appointment.patient.email|slice:":2"|upper }}
                     </div>
                     <div>
-                      <p class="text-gray-800 font-medium">{{ appointment.patient.get_full_name|default:appointment.patient.email }}</p>
-                      <p class="text-sm text-gray-500">{{ appointment.appointment_time|time:"g:i A" }}</p>
-                      <span class="status-badge {% if appointment.status == 'CONFIRMED' %}status-confirmed{% elif appointment.status == 'REQUESTED' %}status-requested{% else %}bg-gray-100 text-gray-800{% endif %}">
+                      <p class="text-slate-800 dark:text-white font-medium">{{ appointment.patient.get_full_name|default:appointment.patient.email }}</p>
+                      <p class="text-sm text-slate-500 dark:text-slate-400">{{ appointment.appointment_time|time:"g:i A" }}</p>
+                      <span class="status-badge {% if appointment.status == 'CONFIRMED' %}status-confirmed{% elif appointment.status == 'REQUESTED' %}status-requested{% else %}bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300{% endif %}">
                         {{ appointment.get_status_display }}
                       </span>
                     </div>
@@ -102,7 +102,7 @@
                     {% if appointment.status == 'CONFIRMED' and appointment.can_join %}
                     <a href="{% url 'join_consultation' appointment.id %}" class="btn btn-success text-sm">Join</a>
                     {% endif %}
-                    <a href="{% url 'appointment_detail' appointment.id %}" class="text-[var(--primary-teal)] hover:text-[var(--primary-dark)]">
+                    <a href="{% url 'appointment_detail' appointment.id %}" class="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">
                       <i class="fas fa-arrow-right"></i>
                     </a>
                   </div>
@@ -110,10 +110,10 @@
                 {% endfor %}
               </ul>
             {% else %}
-              <div class="text-center text-gray-600 py-6">
-                <i class="fas fa-calendar-times text-4xl text-gray-400 mb-3"></i>
+              <div class="text-center text-slate-600 dark:text-slate-400 py-6">
+                <i class="fas fa-calendar-times text-4xl text-slate-400 dark:text-slate-600 mb-3"></i>
                 <p>No appointments scheduled for today.</p>
-                <a href="{% url 'doctor_availability' %}" class="mt-3 inline-block text-[var(--primary-teal)] hover:text-[var(--primary-dark)]">Manage availability</a>
+                <a href="{% url 'doctor_availability' %}" class="mt-3 inline-block text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">Manage availability</a>
               </div>
             {% endif %}
           {% endwith %}
@@ -121,38 +121,38 @@
       </div>
 
       <!-- Upcoming Appointments -->
-      <div class="c360-card">
-        <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-gray-800">Upcoming Appointments</h2>
-          <a href="{% url 'doctor_appointments' %}" class="text-sm text-[var(--primary-teal)] hover:text-[var(--primary-dark)]">View all</a>
+      <div class="glass rounded-xl">
+        <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-slate-800 dark:text-white">Upcoming Appointments</h2>
+          <a href="{% url 'doctor_appointments' %}" class="text-sm text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">View all</a>
         </div>
         <div class="px-6 py-4">
           {% with upcoming_appointments=user.doctor_appointments.all|slice:":5" %}
             {% if upcoming_appointments %}
               <ul class="space-y-4">
                 {% for appointment in upcoming_appointments %}
-                <li class="flex justify-between items-start border-b pb-4 {% if forloop.last %}border-b-0 pb-0{% endif %}">
+                <li class="flex justify-between items-start border-b border-slate-100 dark:border-slate-700 pb-4 {% if forloop.last %}border-b-0 pb-0{% endif %}">
                   <div class="flex items-center space-x-4">
-                    <div class="h-12 w-12 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center font-semibold">
+                    <div class="h-12 w-12 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 flex items-center justify-center font-semibold">
                       {{ appointment.patient.get_full_name|default:appointment.patient.email|slice:":2"|upper }}
                     </div>
                     <div>
-                      <p class="text-gray-800 font-medium">{{ appointment.patient.get_full_name|default:appointment.patient.email }}</p>
-                      <p class="text-sm text-gray-500">{{ appointment.appointment_date|date:"F j, Y" }} at {{ appointment.appointment_time|time:"g:i A" }}</p>
-                      <span class="status-badge {% if appointment.status == 'CONFIRMED' %}status-confirmed{% elif appointment.status == 'REQUESTED' %}status-requested{% else %}bg-gray-100 text-gray-800{% endif %}">
+                      <p class="text-slate-800 dark:text-white font-medium">{{ appointment.patient.get_full_name|default:appointment.patient.email }}</p>
+                      <p class="text-sm text-slate-500 dark:text-slate-400">{{ appointment.appointment_date|date:"F j, Y" }} at {{ appointment.appointment_time|time:"g:i A" }}</p>
+                      <span class="status-badge {% if appointment.status == 'CONFIRMED' %}status-confirmed{% elif appointment.status == 'REQUESTED' %}status-requested{% else %}bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300{% endif %}">
                         {{ appointment.get_status_display }}
                       </span>
                     </div>
                   </div>
-                  <a href="{% url 'appointment_detail' appointment.id %}" class="text-[var(--primary-teal)] hover:text-[var(--primary-dark)]">
+                  <a href="{% url 'appointment_detail' appointment.id %}" class="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">
                     <i class="fas fa-arrow-right"></i>
                   </a>
                 </li>
                 {% endfor %}
               </ul>
             {% else %}
-              <div class="text-center text-gray-600 py-6">
-                <i class="fas fa-calendar-alt text-4xl text-gray-400 mb-3"></i>
+              <div class="text-center text-slate-600 dark:text-slate-400 py-6">
+                <i class="fas fa-calendar-alt text-4xl text-slate-400 dark:text-slate-600 mb-3"></i>
                 <p>No upcoming appointments.</p>
               </div>
             {% endif %}
@@ -164,41 +164,41 @@
     <!-- Right Sidebar -->
     <div class="space-y-6">
       <!-- Doctor Profile -->
-      <div class="c360-card">
-        <div class="border-b border-gray-200 px-6 py-4 flex justify-between items-center">
-          <h2 class="text-lg font-semibold text-gray-800">Doctor Profile</h2>
-          <a href="{% url 'update_doctor_profile' %}" class="text-sm text-[var(--primary-teal)] hover:text-[var(--primary-dark)]">Edit</a>
+      <div class="glass rounded-xl">
+        <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex justify-between items-center">
+          <h2 class="text-lg font-semibold text-slate-800 dark:text-white">Doctor Profile</h2>
+          <a href="{% url 'update_doctor_profile' %}" class="text-sm text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">Edit</a>
         </div>
-        <div class="px-6 py-4 text-sm text-gray-600 space-y-2">
+        <div class="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 space-y-2">
           {% if user.doctor_profile %}
-            <p><span class="font-medium">Name:</span> Dr. {{ user.get_full_name }}</p>
-            <p><span class="font-medium">Specialty:</span> {{ user.doctor_profile.specialty }}</p>
-            <p><span class="font-medium">Experience:</span> {{ user.doctor_profile.experience_years }} years</p>
-            <p><span class="font-medium">Fee:</span> ₹{{ user.doctor_profile.consultation_fee }}</p>
-            <p><span class="font-medium">Status:</span>
+            <p><span class="font-medium text-slate-700 dark:text-slate-300">Name:</span> Dr. {{ user.get_full_name }}</p>
+            <p><span class="font-medium text-slate-700 dark:text-slate-300">Specialty:</span> {{ user.doctor_profile.specialty }}</p>
+            <p><span class="font-medium text-slate-700 dark:text-slate-300">Experience:</span> {{ user.doctor_profile.experience_years }} years</p>
+            <p><span class="font-medium text-slate-700 dark:text-slate-300">Fee:</span> ₹{{ user.doctor_profile.consultation_fee }}</p>
+            <p><span class="font-medium text-slate-700 dark:text-slate-300">Status:</span>
               {% if user.doctor_profile.is_available %}
-                <span class="text-green-600">Available</span>
+                <span class="text-emerald-500 dark:text-emerald-400">Available</span>
               {% else %}
-                <span class="text-red-600">Not Available</span>
+                <span class="text-red-500 dark:text-red-400">Not Available</span>
               {% endif %}
             </p>
           {% else %}
             <p class="text-center">Please complete your doctor profile.</p>
-            <a href="{% url 'update_doctor_profile' %}" class="block text-center text-[var(--primary-teal)] hover:text-[var(--primary-dark)] mt-2">Set up now</a>
+            <a href="{% url 'update_doctor_profile' %}" class="block text-center text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 mt-2">Set up now</a>
           {% endif %}
         </div>
       </div>
 
       <!-- Quick Links -->
-      <div class="c360-card">
-        <div class="border-b border-gray-200 px-6 py-4">
-          <h2 class="text-lg font-semibold text-gray-800">Quick Links</h2>
+      <div class="glass rounded-xl">
+        <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
+          <h2 class="text-lg font-semibold text-slate-800 dark:text-white">Quick Links</h2>
         </div>
-        <ul class="px-6 py-4 space-y-3 text-[var(--primary-teal)]">
-          <li><a href="{% url 'doctor_appointments' %}" class="hover:text-[var(--primary-dark)]">📅 All Appointments</a></li>
-          <li><a href="{% url 'doctor_availability' %}" class="hover:text-[var(--primary-dark)]">🕒 Manage Availability</a></li>
-          <li><a href="{% url 'update_doctor_profile' %}" class="hover:text-[var(--primary-dark)]">👤 Edit Profile</a></li>
-          <li><a href="{% url 'profile' %}" class="hover:text-[var(--primary-dark)]">🔐 Account Settings</a></li>
+        <ul class="px-6 py-4 space-y-3">
+          <li><a href="{% url 'doctor_appointments' %}" class="flex items-center text-indigo-500 dark:text-indigo-400 hover:text-indigo-600"><i class="fas fa-calendar-alt mr-2 w-5"></i> All Appointments</a></li>
+          <li><a href="{% url 'doctor_availability' %}" class="flex items-center text-indigo-500 dark:text-indigo-400 hover:text-indigo-600"><i class="fas fa-clock mr-2 w-5"></i> Manage Availability</a></li>
+          <li><a href="{% url 'update_doctor_profile' %}" class="flex items-center text-indigo-500 dark:text-indigo-400 hover:text-indigo-600"><i class="fas fa-user-edit mr-2 w-5"></i> Edit Profile</a></li>
+          <li><a href="{% url 'profile' %}" class="flex items-center text-indigo-500 dark:text-indigo-400 hover:text-indigo-600"><i class="fas fa-cog mr-2 w-5"></i> Account Settings</a></li>
         </ul>
       </div>
     </div>

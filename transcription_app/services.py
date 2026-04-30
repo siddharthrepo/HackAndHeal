@@ -4,7 +4,7 @@ import json
 import base64
 import time
 import logging
-# from django.conf import settings
+import threading
 from django.core.mail import EmailMessage
 from django.template.loader import render_to_string
 from django.utils import timezone
@@ -76,8 +76,8 @@ class TranscriptionService:
                 )
             
             # Clean up the temporary file
-            # if os.path.exists(temp_file_path):
-            #     os.remove(temp_file_path)
+            if os.path.exists(temp_file_path):
+                os.remove(temp_file_path)
             
             # Log the response for debugging
             logger.debug(f"Deepgram API response status: {response.status_code}")
@@ -89,21 +89,29 @@ class TranscriptionService:
                 # Extract transcript from the response
                 transcript = result.get('results', {}).get('channels', [{}])[0].get('alternatives', [{}])[0].get('transcript', '')
                 
-                if not transcript:
-                    logger.warning("No transcript found in the response")
-                    # raise Exception("No transcript found in the response")
-                    transcript = "nothing here"
-                
                 # Update transcription
-                transcription.content = transcript
+                transcription.content = transcript or ''
                 transcription.status = Transcription.Status.COMPLETED
                 transcription.audio_duration = result.get('metadata', {}).get('duration', 0)
                 transcription.save()
-                
-                # Send emails with the transcription
-                print(transcription.content)
-                TranscriptionService.send_transcription_emails(transcription)
-                
+
+                if not transcript:
+                    print("[TRANSCRIPTION] Deepgram returned empty transcript — no speech detected. Emails will NOT be sent.")
+                    logger.warning("Deepgram returned empty transcript — no speech detected")
+                    return ''
+
+                print(f"[TRANSCRIPTION] Transcript generated ({len(transcript)} chars). Starting email thread...")
+                # Send emails asynchronously so the response is not blocked
+                threading.Thread(
+                    target=TranscriptionService.send_transcription_emails,
+                    args=(transcription,),
+                    daemon=True,
+                ).start()
+
+                # Generate SOAP notes in background
+                from .soap_service import SOAPNoteService
+                SOAPNoteService.generate_in_background(transcription)
+
                 return transcript
             else:
                 error_msg = f"Deepgram API error: {response.status_code} - {response.text}"
@@ -122,41 +130,55 @@ class TranscriptionService:
     def send_transcription_emails(transcription):
         """
         Send transcription emails to both doctor and patient.
+        Safe to call from a background thread.
         """
-        appointment = transcription.appointment
-        patient = appointment.patient
-        doctor = appointment.doctor
-        
-        # Prepare email context
-        context = {
-            'patient_name': patient.get_full_name() or patient.email,
-            'doctor_name': doctor.get_full_name() or doctor.email,
-            'appointment_date': appointment.appointment_date,
-            'appointment_time': appointment.appointment_time,
-            'transcription': transcription.content,
-            'duration': f"{int(transcription.audio_duration // 60)} minutes, {int(transcription.audio_duration % 60)} seconds"
-        }
-        
-        # Send email to patient
-        patient_subject = f"Your consultation transcript with Dr. {doctor.last_name} - {appointment.appointment_date}"
-        patient_html_message = render_to_string('transcription/email_patient.html', context)
-        patient_email = EmailMessage(
-            subject=patient_subject,
-            body=patient_html_message,
-            from_email=settings.EMAIL_HOST_USER,
-            to=[patient.email]
-        )
-        patient_email.content_subtype = 'html'
-        patient_email.send()
-        
-        # Send email to doctor
-        doctor_subject = f"Consultation transcript with {patient.last_name} - {appointment.appointment_date}"
-        doctor_html_message = render_to_string('transcription/email_doctor.html', context)
-        doctor_email = EmailMessage(
-            subject=doctor_subject,
-            body=doctor_html_message,
-            from_email=settings.EMAIL_HOST_USER,
-            to=[doctor.email]
-        )
-        doctor_email.content_subtype = 'html'
-        doctor_email.send()
+        try:
+            appointment = transcription.appointment
+            patient = appointment.patient
+            doctor = appointment.doctor
+
+            print(f"[EMAIL] Preparing transcription emails for appointment {appointment.id}")
+            print(f"[EMAIL] Patient: {patient.email}, Doctor: {doctor.email}")
+
+            context = {
+                'patient_name': patient.get_full_name() or patient.email,
+                'doctor_name': doctor.get_full_name() or doctor.email,
+                'appointment_date': appointment.appointment_date,
+                'appointment_time': appointment.appointment_time,
+                'transcription': transcription.content,
+                'duration': f"{int(transcription.audio_duration // 60)} minutes, {int(transcription.audio_duration % 60)} seconds"
+            }
+
+            # Send email to patient
+            patient_subject = f"Your consultation transcript with Dr. {doctor.last_name} - {appointment.appointment_date}"
+            patient_html_message = render_to_string('transcription/email_patient.html', context)
+            patient_email = EmailMessage(
+                subject=patient_subject,
+                body=patient_html_message,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[patient.email]
+            )
+            patient_email.content_subtype = 'html'
+            patient_email.send()
+            print(f"[EMAIL] Patient email sent to {patient.email}")
+
+            # Send email to doctor
+            doctor_subject = f"Consultation transcript with {patient.last_name} - {appointment.appointment_date}"
+            doctor_html_message = render_to_string('transcription/email_doctor.html', context)
+            doctor_email = EmailMessage(
+                subject=doctor_subject,
+                body=doctor_html_message,
+                from_email=settings.EMAIL_HOST_USER,
+                to=[doctor.email]
+            )
+            doctor_email.content_subtype = 'html'
+            doctor_email.send()
+            print(f"[EMAIL] Doctor email sent to {doctor.email}")
+
+            print("[EMAIL] All transcription emails sent successfully")
+        except Exception as e:
+            print(f"[EMAIL] ERROR sending transcription emails: {e}")
+            logger.error(f"Failed to send transcription emails: {e}")
+        finally:
+            from django.db import connection
+            connection.close()

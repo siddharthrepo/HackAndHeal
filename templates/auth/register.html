@@ -1,28 +1,28 @@
 {% extends 'base.html' %}
 {% load widget_tweaks %}
 
-{% block title %}Sign up for Chikitsa360{% endblock %}
+{% block title %}Sign up for HealthMeter{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-  <div class="max-w-lg mx-auto">
-    <div class="c360-card border border-gray-200">
+<div class="min-h-[80vh] flex items-center justify-center px-4 py-16 bg-gradient-to-br from-slate-50 to-indigo-50/50 dark:from-slate-900 dark:to-slate-800">
+  <div class="max-w-lg w-full">
+    <div class="glass-strong rounded-2xl overflow-hidden">
 
       <!-- Header -->
-      <div class="bg-gradient-to-r from-[var(--primary-teal)] to-[var(--primary-dark)] px-6 py-8 text-white rounded-t-lg">
-        <h2 class="text-2xl font-semibold text-center">Create your account</h2>
-        <p class="mt-1 text-center text-white/80 text-sm">
-          Join Chikitsa360 for healthcare at your fingertips
+      <div class="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-700 px-6 py-8 text-white text-center">
+        <h2 class="text-2xl font-bold">Create your account</h2>
+        <p class="mt-1 text-indigo-100 text-sm">
+          Join HealthMeter for healthcare at your fingertips
         </p>
       </div>
 
       <!-- Form -->
-      <div class="px-6 py-8">
+      <div class="px-6 py-8 bg-white/50 dark:bg-slate-800/50">
         <form method="post" novalidate>
           {% csrf_token %}
 
           {% if form.non_field_errors %}
-          <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
+          <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-400 px-4 py-3 rounded-xl mb-4">
             {% for error in form.non_field_errors %}
             <p>{{ error }}</p>
             {% endfor %}
@@ -32,11 +32,11 @@
           <!-- Role selection -->
           <div class="mb-6">
             <label class="form-label">I am registering as:</label>
-            <div class="flex flex-wrap gap-4">
+            <div class="flex flex-wrap gap-4 mt-2">
               {% for choice in form.role %}
-              <label class="flex items-center space-x-2">
+              <label class="flex items-center space-x-2 px-4 py-2 rounded-xl border border-slate-200 dark:border-slate-600 hover:border-indigo-400 dark:hover:border-indigo-400 cursor-pointer transition-colors has-[:checked]:bg-indigo-50 has-[:checked]:border-indigo-500 dark:has-[:checked]:bg-indigo-900/20">
                 {{ choice.tag }}
-                <span class="text-gray-700">{{ choice.choice_label }}</span>
+                <span class="text-slate-700 dark:text-slate-300">{{ choice.choice_label }}</span>
               </label>
               {% endfor %}
             </div>
@@ -86,7 +86,7 @@
               {% endfor %}
             </p>
             {% endif %}
-            <p class="text-xs text-gray-500 mt-1">We'll never share your email with anyone else.</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">We'll never share your email with anyone else.</p>
           </div>
 
           <!-- Password -->
@@ -100,7 +100,7 @@
               {% endfor %}
             </p>
             {% endif %}
-            <ul class="mt-1 text-xs text-gray-500 list-disc list-inside">
+            <ul class="mt-1 text-xs text-slate-500 dark:text-slate-400 list-disc list-inside">
               <li>Your password can't be too similar to your personal info.</li>
               <li>Must contain at least 8 characters.</li>
               <li>Can't be a commonly used password.</li>
@@ -123,29 +123,29 @@
 
           <!-- Terms -->
           <div class="mb-6">
-            <label class="flex items-start gap-3 text-sm text-gray-700">
-              <input id="terms" name="terms" type="checkbox" class="h-4 w-4 text-teal-600 border-gray-300 rounded" required>
+            <label class="flex items-start gap-3 text-sm text-slate-700 dark:text-slate-300">
+              <input id="terms" name="terms" type="checkbox" class="h-4 w-4 text-indigo-600 border-slate-300 dark:border-slate-600 rounded mt-0.5" required>
               <span>
                 I agree to the
-                <a href="#" class="text-brand hover:underline">Terms of Service</a>
+                <a href="#" class="text-indigo-500 dark:text-indigo-400 hover:underline">Terms of Service</a>
                 and
-                <a href="#" class="text-brand hover:underline">Privacy Policy</a>
+                <a href="#" class="text-indigo-500 dark:text-indigo-400 hover:underline">Privacy Policy</a>
               </span>
             </label>
           </div>
 
           <!-- Submit -->
           <div>
-            <button type="submit" class="c360-btn-primary w-full text-center">
+            <button type="submit" class="c360-btn-primary w-full text-center py-3">
               Create Account
             </button>
           </div>
         </form>
 
         <!-- Footer Link -->
-        <div class="mt-6 text-center text-sm text-gray-600">
+        <div class="mt-6 text-center text-sm text-slate-600 dark:text-slate-400">
           Already have an account?
-          <a href="{% url 'login' %}" class="font-semibold text-brand hover:underline">Sign in</a>
+          <a href="{% url 'login' %}" class="font-semibold text-indigo-500 dark:text-indigo-400 hover:underline">Sign in</a>
         </div>
       </div>
     </div>

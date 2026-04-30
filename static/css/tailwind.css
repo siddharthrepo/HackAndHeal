@@ -4,97 +4,153 @@
 
 /* Custom components */
 .btn {
-  @apply px-4 py-2 rounded font-medium focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors;
+  @apply px-4 py-2 rounded-lg font-medium focus:outline-none focus:ring-2 focus:ring-opacity-50 transition-colors;
 }
 
 .btn-primary {
-  @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500;
+  @apply bg-indigo-500 text-white hover:bg-indigo-600 focus:ring-indigo-400;
 }
 
 .btn-secondary {
-  @apply bg-gray-600 text-white hover:bg-gray-700 focus:ring-gray-500;
+  @apply bg-slate-600 text-white hover:bg-slate-700 focus:ring-slate-400;
 }
 
 .btn-success {
-  @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+  @apply bg-emerald-500 text-white hover:bg-emerald-600 focus:ring-emerald-400;
 }
 
 .btn-danger {
-  @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  @apply bg-red-500 text-white hover:bg-red-600 focus:ring-red-400;
 }
 
 .card {
-  @apply bg-white rounded-lg shadow-md overflow-hidden border border-gray-200;
+  @apply bg-white rounded-xl shadow-md overflow-hidden border border-slate-200;
+}
+
+.dark .card {
+  @apply bg-slate-800 border-slate-700;
 }
 
 .form-input {
-  @apply w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+  @apply w-full mt-1 px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors;
+}
+
+.dark .form-input {
+  @apply bg-slate-800 border-slate-600 text-slate-100 focus:ring-indigo-400 focus:border-indigo-400;
 }
 
 .form-label {
-  @apply block text-gray-700 font-medium mb-2;
+  @apply block text-sm font-medium text-slate-700 mb-1;
+}
+
+.dark .form-label {
+  @apply text-slate-300;
 }
 
 .form-error {
-  @apply text-red-600 text-sm mt-1;
+  @apply text-red-500 text-sm mt-1;
+}
+
+.form-textarea {
+  @apply w-full mt-1 px-4 py-2.5 border border-slate-300 rounded-lg shadow-sm h-28 resize-none bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors;
+}
+
+.dark .form-textarea {
+  @apply bg-slate-800 border-slate-600 text-slate-100 focus:ring-indigo-400 focus:border-indigo-400;
 }
 
 /* Healthcare specific styles */
 .doctor-card {
-  @apply bg-white rounded-lg shadow-md border border-gray-200 transition-transform hover:shadow-lg hover:-translate-y-1;
+  @apply bg-white rounded-xl shadow-md border border-slate-200 transition-all hover:shadow-xl hover:-translate-y-1;
+}
+
+.dark .doctor-card {
+  @apply bg-slate-800 border-slate-700;
 }
 
 .availability-slot {
-  @apply bg-blue-50 border border-blue-200 rounded-md p-2 text-center cursor-pointer hover:bg-blue-100 transition-colors;
+  @apply bg-indigo-50 border border-indigo-200 rounded-lg p-2 text-center cursor-pointer hover:bg-indigo-100 transition-colors;
+}
+
+.dark .availability-slot {
+  @apply bg-indigo-950 border-indigo-800 hover:bg-indigo-900;
 }
 
 .availability-slot.booked {
-  @apply bg-gray-100 border-gray-200 cursor-not-allowed;
+  @apply bg-slate-100 border-slate-200 cursor-not-allowed;
+}
+
+.dark .availability-slot.booked {
+  @apply bg-slate-800 border-slate-700;
 }
 
 .status-badge {
-  @apply px-2 py-1 rounded-full text-xs font-semibold;
+  @apply px-2.5 py-1 rounded-full text-xs font-semibold;
 }
 
 .status-confirmed {
-  @apply bg-green-100 text-green-800;
+  @apply bg-emerald-100 text-emerald-800;
+}
+
+.dark .status-confirmed {
+  @apply bg-emerald-900/30 text-emerald-400;
 }
 
 .status-requested {
-  @apply bg-yellow-100 text-yellow-800;
+  @apply bg-amber-100 text-amber-800;
+}
+
+.dark .status-requested {
+  @apply bg-amber-900/30 text-amber-400;
 }
 
 .status-completed {
-  @apply bg-blue-100 text-blue-800;
+  @apply bg-indigo-100 text-indigo-800;
+}
+
+.dark .status-completed {
+  @apply bg-indigo-900/30 text-indigo-400;
 }
 
 .status-cancelled {
   @apply bg-red-100 text-red-800;
 }
 
+.dark .status-cancelled {
+  @apply bg-red-900/30 text-red-400;
+}
+
 .message-bubble {
-  @apply rounded-lg p-3 max-w-xs;
+  @apply rounded-xl p-3 max-w-xs;
 }
 
 .message-bubble.sent {
-  @apply bg-blue-500 text-white ml-auto;
+  @apply bg-indigo-500 text-white ml-auto;
 }
 
 .message-bubble.received {
-  @apply bg-gray-200 text-gray-800;
+  @apply bg-slate-200 text-slate-800;
+}
+
+.dark .message-bubble.received {
+  @apply bg-slate-700 text-slate-200;
 }
 
 /* Healthcare color scheme */
 .text-brand {
-  @apply text-blue-600;
+  @apply text-indigo-500;
+}
+
+.dark .text-brand {
+  @apply text-indigo-400;
 }
 
 .bg-brand {
-  @apply bg-blue-600;
+  @apply bg-indigo-500;
 }
 
 .border-brand {
-  @apply border-blue-600;
+  @apply border-indigo-500;
 }
 
 /* Responsive utilities */
@@ -108,12 +164,3 @@
 .sr-only {
   @apply absolute w-px h-px -m-px overflow-hidden whitespace-nowrap border-0 p-0;
 }
-    .form-label {
-        @apply block text-sm font-medium text-gray-700;
-    }
-    .form-input {
-        @apply w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500;
-    }
-    .form-textarea {
-        @apply w-full mt-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm h-28 resize-none focus:outline-none focus:ring-1 focus:ring-teal-500 focus:border-teal-500;
-    }

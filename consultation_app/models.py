@@ -101,19 +101,15 @@ class Appointment(models.Model):
         today = timezone.now().date()
         return self.appointment_date == today
     
+    reminder_24h_sent = models.BooleanField(default=False)
+    reminder_1h_sent = models.BooleanField(default=False)
+
     @property
     def can_join(self):
-        """Check if it's time to join the appointment (within 15 minutes before)."""
+        """Check if it's time to join the appointment (any time on the appointment day)."""
         if not self.is_today or self.status != self.Status.CONFIRMED:
             return False
-        
-        now = timezone.now()
-        appointment_datetime = timezone.make_aware(
-            timezone.datetime.combine(self.appointment_date, self.appointment_time)
-        )
-        
-        time_diff = appointment_datetime - now
-        return time_diff.total_seconds() <= 900 and time_diff.total_seconds() > -3600  # 15 min before to 1 hour after
+        return True
 
 class Service(models.Model):
     """Model for healthcare services offered on the platform."""
@@ -180,3 +176,52 @@ class HealthTip(models.Model):
     
     def __str__(self):
         return self.title
+
+
+class Prescription(models.Model):
+    """Model for storing digital prescriptions."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    appointment = models.ForeignKey(Appointment, on_delete=models.CASCADE, related_name='prescriptions')
+    diagnosis = models.TextField()
+    instructions = models.TextField(blank=True)
+    doctor_signature_text = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Prescription for {self.appointment.patient.get_full_name()} by Dr. {self.appointment.doctor.get_full_name()} on {self.created_at.strftime('%Y-%m-%d')}"
+
+
+class PrescriptionItem(models.Model):
+    """Model for individual medication items in a prescription."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    prescription = models.ForeignKey(Prescription, on_delete=models.CASCADE, related_name='items')
+    medication_name = models.CharField(max_length=255)
+    dosage = models.CharField(max_length=100)
+    frequency = models.CharField(max_length=100)
+    duration = models.CharField(max_length=100)
+    notes = models.TextField(blank=True)
+    order = models.PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+
+    def __str__(self):
+        return f"{self.medication_name} - {self.dosage}"
+
+
+class FollowUp(models.Model):
+    """Model for scheduling follow-up appointments."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    appointment = models.OneToOneField(Appointment, on_delete=models.CASCADE, related_name='follow_up')
+    follow_up_date = models.DateField()
+    notes = models.TextField(blank=True)
+    reminder_sent = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Follow-up for {self.appointment.patient.get_full_name()} on {self.follow_up_date}"
