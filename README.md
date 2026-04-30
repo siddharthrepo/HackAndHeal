@@ -1,68 +1,83 @@
-# HealthMeter — Healthcare! Everywhere!
+<h1 align="center">🏥 <strong>Chikitsa360</strong> | <em>Healthcare Anywhere!</em></h1>
 
-A comprehensive telehealth platform built with Django, enabling video consultations, real-time chat, AI-powered clinical documentation, and digital prescriptions.
 
-## Features
+<div align="center">
+  <img src="static/images/chikitsa360-logo.png" alt="Chikitsa360 Banner" />
+  <br/>
+  <h3>🥇 Veersa Hackathon 2026 Submission | Use Case 2: Telehealth Solution</h3>
+  <h4>Team: HackAndHeal- ABES College Batch of 2026</h4>
+  
+  [![Django](https://img.shields.io/badge/Django-092E20?style=for-the-badge&logo=django&logoColor=white)](https://www.djangoproject.com/)
+  [![WebRTC](https://img.shields.io/badge/WebRTC-333333?style=for-the-badge&logo=webrtc&logoColor=white)](https://webrtc.org/)
+  [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+  [![Daily.co](https://img.shields.io/badge/Daily.co-5039FC?style=for-the-badge&logo=daily&logoColor=white)](https://www.daily.co/)
+  [![Deepgram](https://img.shields.io/badge/Deepgram-2C0746?style=for-the-badge&logo=deepgram&logoColor=white)](https://deepgram.com/)
+</div>
 
-### Core
-- **Video Consultations** — Powered by Daily.co with real-time audio/video
-- **Real-Time Chat** — Django Channels WebSocket messaging
-- **Online Payments** — Razorpay integration for consultation fees
-- **Role-Based Access** — Separate flows for patients, doctors, and admins
+## 📋 **Project Overview**
 
-### AI-Powered SOAP Notes
-- Automatic SOAP (Subjective/Objective/Assessment/Plan) note generation from consultation transcriptions
-- Uses Groq LLM (LLaMA 3.3 70B) via LangChain
-- Doctors can view, edit, and regenerate notes; patients get read-only access
-- Generated in the background immediately after transcription completes
+**Chikitsa360** is a comprehensive telehealth platform addressing the post-pandemic need for accessible, quality healthcare from anywhere. Built with Django and modern web technologies, our solution enables seamless virtual consultations between patients and healthcare providers with the security, convenience, and effectiveness of in-person visits.
 
-### Digital Prescription Generator
-- Doctors create prescriptions with diagnosis, medications, dosage, and instructions
-- Dynamic inline formset for adding/removing medication items
-- Professional PDF generation using ReportLab with clinic branding
-- Patients and doctors can download prescriptions as PDF
+> *"Quality healthcare shouldn't be limited by geography. Chikitsa360 bridges the gap between patients and doctors, ensuring everyone has access to medical expertise regardless of location."*
 
-### Smart Appointment Reminders & Follow-Up
-- Automated email reminders at 24 hours and 1 hour before appointments
-- Follow-up date scheduling by doctors with patient email reminders
-- Management command `send_reminders` for cron/scheduler integration
-- Token-protected HTTP endpoint for external trigger (e.g., Koyeb cron)
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">
+        <img src="staticfiles/images/Screenshot 2025-05-12 000949.png" alt="Patient Dashboard" width="400px" />
+        <br />
+<!--         <em>Patient Dashboard View</em> -->
+      </td>
+      <tr>
+      <td align="center">
+        <img src="staticfiles/images/Screenshot 2025-05-12 001153.png" alt="Doctor Interface" width="400px" />
+        <br />
+<!--         <em>Doctor Consultation Interface</em> -->
+      </td>
+    </tr>
+    </tr>
+  </table>
+</div>
 
-### Transcription
-- Audio recording via Web Audio API (mixes local + remote audio)
-- Deepgram API for speech-to-text
-- Email transcripts to both participants
+## 🌟 **Key Features**
 
-## Tech Stack
+### 👥 **User Experience**
+- **Intuitive Patient Portal** - Simple registration, medical history submission, and appointment booking
+- **Doctor Directory** - Search and filter doctors by specialty, availability, and languages spoken
+- **Virtual Waiting Room** - Real-time updates on appointment status and estimated wait times
+- **Post-Consultation Summary** - Automated visit summaries with prescriptions and follow-up instructions
 
-| Layer | Technology |
-|-------|-----------|
-| Backend | Django 5, Django Channels |
-| Database | PostgreSQL |
-| Video | Daily.co (callObject mode) |
-| Transcription | Deepgram API |
-| AI/LLM | Groq (LLaMA 3.3 70B) via LangChain |
-| PDF | ReportLab |
-| Payments | Razorpay |
-| Frontend | Tailwind CSS (CDN), vanilla JS |
-| Deployment | Docker, Koyeb |
+### 🩺 **Clinical Features**
+- **HD Video Consultations** - Crystal-clear WebRTC-powered video encounters
+- **Multi-participant Sessions** - Invite family members or specialists to join consultations
+- **Live Transcription** - Real-time conversation transcription using Deepgram API
+- **Screen Sharing** - Share test results, imaging, or educational materials
+- **Medical Records** - Secure storage and sharing of patient documents
 
-## Setup
+### 🔒 **Security & Compliance**
+- **End-to-End Encryption** - Secure video and messaging communications
+- **Role-Based Access** - Granular permissions system for healthcare team members
+- **Audit Logging** - Comprehensive activity tracking for compliance purposes
 
-```bash
-# Clone & install
-git clone <repo-url>
-cd chikitsa360
-pip install -r requirements.txt
+### 💳 **Payment & Billing (Under Development)**
+- **Transparent Pricing** - Clear fee structures displayed before booking
+- **Multiple Payment Options** - Credit/debit cards, digital wallets, and insurance processing
+- **Automated Receipts** - Instant payment confirmations and tax documentation
+- **Insurance Verification** - Real-time benefits eligibility checking (in development)
 
-# Configure .env (copy from .env.example and fill in values)
-cp .env.example .env
+## 🔍 **Technical Implementation**
 
-# Database
-python manage.py migrate
-
-# Run
-python manage.py runserver
+### Architecture
+```
+Chikitsa360/
+├── accounts/          # User authentication & profiles
+├── appointments/      # Appointment scheduling & management
+├── consultation/      # Video consultation & transcription
+├── payments/          # Payment processing & billing
+├── notifications/     # Email & SMS alerts
+├── static/            # CSS, JavaScript, images
+├── templates/         # HTML templates
+└── chikitsa360/       # Project settings
 ```
 
 ### Environment Variables
@@ -88,9 +103,29 @@ Set up a cron job or external scheduler to call:
 # Via management command
 python manage.py send_reminders
 
-# Or via HTTP endpoint
-curl "https://your-domain.com/api/trigger-reminders/?token=YOUR_TOKEN"
-```
+1. ✅ **Instant access to health consultation** - Implemented through our intuitive user flow from registration to video consultation
+
+2. ✅ **Patient information capture** - Comprehensive intake forms with specialty selection
+
+3. ✅ **Integrated payment system** - Secure payment processing before consultation using Razorpay 
+
+4. ✅ **Privacy protection for PHI data** - End-to-end encryption and secure storage of all patient data
+
+5. ✅ **In-app chat and information sharing** - Use to share prescriptions and medical records
+
+6. ✅ **Transcription service for accent challenges** - Deepgram API integration for accurate transcription across accents and dialects
+
+## 📱 **Live Demo**
+
+- **Live Application**: [https://helpless-trixy-siddharthrepo-de886f3f.koyeb.app/)
+- **Demo Video**: [Watch Project Demo](https://drive.google.com/file/d/1wqVfEuVkxP7hajtmYi1CWqQKUJ5nacaR/view?usp=sharing) <!-- 👈 Add your demo video link here -->
+
+## 🖼️ **UI/UX Design**
+
+- **Figma Design**: [View Figma Prototype](https://www.figma.com/design/3yNxgww0xoN4VcDLo6QY2X/home-2?node-id=0-1&t=JJlQkXj3MgVOuFPB-1) <!-- 👈 Add your Figma link here -->
+- **Design System**: Our interface follows Material Design principles with a custom healthcare-focused color palette
+
+## 🏛️ **Information Architecture**
 
 ## Project Structure
 
@@ -105,3 +140,27 @@ chikitsa360/
 ├── static/            # CSS, JS, images
 └── chikitsa360/       # Project settings & URLs
 ```
+
+The architecture ensures that users can quickly locate needed information with minimal clicks, following a logical flow from registration through consultation and follow-up care.
+
+## 🔮 **Future Enhancements**
+
+- **AI-Powered Symptom Assessment** - Pre-consultation symptom checking
+- **IoT Integration** - Support for connected medical devices
+- **Multilingual Support** - Interface translation and real-time interpretation
+- **Mobile Applications** - Native iOS and Android apps
+- **Pharmacy Integration** - Direct prescription fulfillment partnerships
+
+## 👨‍💻 **Team Members**
+
+- **Siddharth Raturi** - Full Stack Development & Project Lead
+- **Stuti Sharma** - Full Stack Development
+- **Sona Poddar** - Full Stack Development
+- **Vidhi Jain** - UI/UX Design & Documentation
+
+---
+
+<div align="center">
+  <p>Made with ❤️ for the Veersa Hackathon 2026</p>
+  <p>© 2025 Team HackAndHeal | ABES College Batch of 2026</p>
+</div>
