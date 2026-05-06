@@ -24,4 +24,6 @@ RUN mkdir -p /app/staticfiles /app/media
 EXPOSE 8000
 
 # Daphne (ASGI) so Django Channels websockets work.
-CMD ["sh", "-c", "python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p 8000 chikitsa360.asgi:application"]
+# migrate + collectstatic chained inline so no extra Python processes spawn at deploy time
+# (avoids OOM on t2.micro). docker-compose's depends_on health-check ensures DB is ready.
+CMD ["sh", "-c", "python manage.py migrate --noinput && python manage.py collectstatic --noinput && daphne -b 0.0.0.0 -p 8000 chikitsa360.asgi:application"]

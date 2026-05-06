@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+
+{% block title %}Transcript — Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.email }}{% endblock %}
+
+{% block extra_css %}
+<style>
+  .transcript-body {
+    white-space: pre-wrap;
+    font-variant-ligatures: none;
+    line-height: 1.7;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+
+  <!-- Breadcrumb -->
+  <nav class="text-sm text-slate-500 dark:text-slate-400 mb-6">
+    <a href="{% url 'appointment_detail' appointment.id %}" class="hover:text-indigo-600 dark:hover:text-indigo-400 inline-flex items-center gap-1">
+      <i class="fas fa-arrow-left text-[10px]"></i> Back to appointment
+    </a>
+  </nav>
+
+  <!-- Header -->
+  <div class="flex items-start justify-between mb-8 gap-4">
+    <div>
+      <p class="text-xs uppercase tracking-[0.18em] text-indigo-500 dark:text-indigo-400 font-semibold">Consultation transcript</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-1">
+        {% if user == appointment.doctor %}
+          With {{ appointment.patient.get_full_name|default:appointment.patient.email }}
+        {% else %}
+          With Dr. {{ appointment.doctor.get_full_name|default:appointment.doctor.email }}
+        {% endif %}
+      </h1>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">
+        {{ appointment.appointment_date|date:"l, F j, Y" }} at {{ appointment.appointment_time|time:"g:i A" }}
+      </p>
+    </div>
+
+    <!-- Status pill -->
+    <div class="shrink-0">
+      {% if transcription.status == 'COMPLETED' %}
+        {% include "partials/pill.html" with tone="emerald" label="Completed" %}
+      {% elif transcription.status == 'PROCESSING' %}
+        {% include "partials/pill.html" with tone="indigo" label="Processing" %}
+      {% elif transcription.status == 'PENDING' %}
+        {% include "partials/pill.html" with tone="amber" label="Pending" %}
+      {% elif transcription.status == 'FAILED' %}
+        {% include "partials/pill.html" with tone="red" label="Failed" %}
+      {% else %}
+        {% include "partials/pill.html" with tone="slate" label=transcription.get_status_display %}
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Stat strip -->
+  <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <p class="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Duration</p>
+      {% with secs=transcription.audio_duration|default:0 %}
+      <p class="text-lg font-bold text-slate-900 dark:text-white tabular-nums mt-1">
+        {% if secs %}
+          {{ secs|floatformat:0 }}s
+        {% else %}
+          —
+        {% endif %}
+      </p>
+      {% endwith %}
+    </div>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <p class="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Words</p>
+      <p class="text-lg font-bold text-slate-900 dark:text-white tabular-nums mt-1">
+        {% if transcription.content %}
+          {{ transcription.content|wordcount }}
+        {% else %}
+          0
+        {% endif %}
+      </p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <p class="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">Generated</p>
+      <p class="text-sm font-semibold text-slate-900 dark:text-white mt-1">{{ transcription.updated_at|date:"M j" }}</p>
+      <p class="text-[11px] text-slate-500 dark:text-slate-400">{{ transcription.updated_at|time:"g:i A" }}</p>
+    </div>
+    <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+      <p class="text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">SOAP note</p>
+      {% if appointment.soap_note %}
+        <a href="{% url 'soap_note_detail' appointment.soap_note.id %}" class="text-sm font-semibold text-indigo-600 dark:text-indigo-400 hover:underline mt-1 inline-flex items-center gap-1">
+          View <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
+        </a>
+      {% else %}
+        <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">—</p>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Body -->
+  {% if transcription.status == 'COMPLETED' and transcription.content %}
+    <section class="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 mb-6">
+      <div class="flex items-center justify-between mb-5">
+        <div>
+          <p class="text-xs uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 font-semibold">Verbatim transcript</p>
+          <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">Speaker labels (Speaker 0 / Speaker 1) are auto-detected.</p>
+        </div>
+        <button onclick="copyTranscript()" type="button"
+                class="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 px-3 py-1.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition">
+          <i class="fas fa-copy text-xs"></i> Copy
+        </button>
+      </div>
+      <div id="transcript-text" class="transcript-body text-slate-800 dark:text-slate-200 text-base">{{ transcription.content }}</div>
+    </section>
+
+  {% elif transcription.status == 'FAILED' %}
+    <div class="rounded-3xl border border-red-200 dark:border-red-900/50 bg-red-50/50 dark:bg-red-950/20 p-6 sm:p-8 mb-6">
+      <div class="flex items-start gap-4">
+        <span class="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 shrink-0">
+          <i class="fas fa-triangle-exclamation"></i>
+        </span>
+        <div>
+          <h2 class="text-lg font-bold text-red-900 dark:text-red-100">Transcription failed</h2>
+          <p class="text-sm text-red-700 dark:text-red-300 mt-1">{{ transcription.error_message|default:"An unknown error occurred while processing the audio." }}</p>
+        </div>
+      </div>
+    </div>
+
+  {% elif transcription.status == 'PROCESSING' or transcription.status == 'PENDING' %}
+    <div class="rounded-3xl border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-950/20 p-8 mb-6 text-center">
+      <div class="mx-auto h-12 w-12 rounded-full bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 flex items-center justify-center mb-4">
+        <i class="fas fa-circle-notch fa-spin"></i>
+      </div>
+      <h2 class="text-lg font-bold text-slate-900 dark:text-white">Transcript is being generated</h2>
+      <p class="text-sm text-slate-500 dark:text-slate-400 mt-1">This usually takes under a minute. Refresh the page to check progress.</p>
+    </div>
+
+  {% else %}
+    <div class="rounded-3xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/40 dark:bg-slate-900/30">
+      {% include "partials/empty_state.html" with icon="fa-microphone-slash" title="No transcript captured" hint="No audio was captured for this consultation, so there is nothing to transcribe." %}
+    </div>
+  {% endif %}
+
+  <!-- Footer actions -->
+  <div class="flex flex-wrap items-center gap-3">
+    <a href="{% url 'appointment_detail' appointment.id %}"
+       class="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-indigo-400 dark:hover:border-indigo-500 px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200 transition">
+      <i class="fas fa-arrow-left text-xs"></i> Appointment details
+    </a>
+    {% if appointment.soap_note %}
+    <a href="{% url 'soap_note_detail' appointment.soap_note.id %}"
+       class="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold px-4 py-2.5 transition">
+      <i class="fas fa-notes-medical"></i> View SOAP note
+    </a>
+    {% endif %}
+  </div>
+
+</div>
+
+{% if transcription.status == 'COMPLETED' and transcription.content %}
+<script>
+function copyTranscript() {
+  const txt = document.getElementById('transcript-text').innerText;
+  navigator.clipboard.writeText(txt).then(() => {
+    // Tiny inline feedback — no toast lib dependency
+    const btn = event.currentTarget;
+    const original = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-check text-xs text-emerald-500"></i> Copied';
+    setTimeout(() => { btn.innerHTML = original; }, 1500);
+  });
+}
+</script>
+{% endif %}
+{% endblock %}
