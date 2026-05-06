@@ -41,3 +41,45 @@
         name: cron
         state: started
         enabled: yes
+
+    # ── Swap (defensive against OOM on t2.micro: 1 GB RAM is tight) ──
+    - name: Check if swapfile already exists
+      stat:
+        path: /swapfile
+      register: swapfile_stat
+
+    - name: Allocate 2 GB swap file
+      command: fallocate -l 2G /swapfile
+      args:
+        creates: /swapfile
+      when: not swapfile_stat.stat.exists
+
+    - name: Lock down swapfile permissions
+      file:
+        path: /swapfile
+        owner: root
+        group: root
+        mode: "0600"
+
+    - name: Format swap
+      command: mkswap /swapfile
+      when: not swapfile_stat.stat.exists
+
+    - name: Enable swap (active until reboot)
+      command: swapon /swapfile
+      register: swapon_result
+      failed_when: swapon_result.rc != 0 and 'already' not in (swapon_result.stderr | default(''))
+      changed_when: "'already' not in (swapon_result.stderr | default(''))"
+
+    - name: Persist swap across reboots
+      lineinfile:
+        path: /etc/fstab
+        line: "/swapfile none swap sw 0 0"
+        state: present
+
+    - name: Tune swappiness (prefer RAM, only swap under real pressure)
+      sysctl:
+        name: vm.swappiness
+        value: "10"
+        state: present
+        reload: yes

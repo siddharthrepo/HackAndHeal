@@ -94,14 +94,12 @@ jobs:
             sudo docker-compose up -d
             sudo docker-compose ps
 
-            echo "Waiting for db to settle..."
-            sleep 8
-
-            echo "Running migrations..."
-            sudo docker-compose exec -T web python manage.py migrate --noinput
-
-            echo "Collecting static files..."
-            sudo docker-compose exec -T web python manage.py collectstatic --noinput
+            # migrate + collectstatic happen inside the container's CMD on startup,
+            # so no extra Python processes spawn here (avoids OOM on t2.micro).
+            # Wait briefly and tail the web log to confirm boot.
+            sleep 5
+            echo "=== web container boot log (last 40 lines) ==="
+            sudo docker-compose logs --tail=40 web
           EOF
 
       - name: Install reminder cron on EC2
