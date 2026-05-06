@@ -1,0 +1,117 @@
+name: Deploy Application
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Login to Docker Hub
+        run: |
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | \
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} --password-stdin
+
+      - name: Build Docker image
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/healthmeter:latest .
+
+      - name: Push Docker image
+        run: |
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/healthmeter:latest
+
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s" "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H healthmeter.duckdns.org >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Copy compose + project files to EC2
+        run: |
+          rsync -az --delete \
+            --exclude '.git' \
+            --exclude '.github' \
+            --exclude '.venv' --exclude 'venv' \
+            --exclude '__pycache__' \
+            --exclude 'node_modules' \
+            --exclude '.env' \
+            --exclude 'staticfiles' --exclude 'media' \
+            --exclude 'creds' \
+            --exclude 'infra' --exclude 'ansible' --exclude 'scripts' \
+            -e "ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa" \
+            ./ ${{ secrets.EC2_USER }}@healthmeter.duckdns.org:/home/ubuntu/healthmeter/
+
+      - name: Deploy on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            ${{ secrets.EC2_USER }}@healthmeter.duckdns.org bash -s <<'EOF'
+            set -e
+            cd /home/ubuntu/healthmeter
+
+            # Rebuild .env from scratch every deploy
+            rm -f .env
+            cat > .env <<ENV
+          DEBUG=False
+          DJANGO_SECRET_KEY=${{ secrets.DJANGO_SECRET_KEY }}
+          ALLOWED_HOSTS=healthmeter.duckdns.org
+          CSRF_TRUSTED_ORIGINS=https://healthmeter.duckdns.org
+
+          POSTGRES_USER=${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD=${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB=${{ secrets.POSTGRES_DB }}
+          DATABASE_URL=postgres://${{ secrets.POSTGRES_USER }}:${{ secrets.POSTGRES_PASSWORD }}@db:5432/${{ secrets.POSTGRES_DB }}
+
+          DOCKERHUB_USERNAME=${{ secrets.DOCKERHUB_USERNAME }}
+
+          EMAIL_HOST_USER=${{ secrets.EMAIL_HOST_USER }}
+          EMAIL_HOST_PASSWORD=${{ secrets.EMAIL_HOST_PASSWORD }}
+          DEFAULT_FROM_EMAIL=${{ secrets.EMAIL_HOST_USER }}
+
+          RAZORPAY_ENABLED=False
+          RAZORPAY_KEY_ID=
+          RAZORPAY_KEY_SECRET=
+
+          DAILY_API_KEY=${{ secrets.DAILY_API_KEY }}
+          DEEPGRAM_API_KEY=${{ secrets.DEEPGRAM_API_KEY }}
+          DEEPGRAM_MODEL=${{ secrets.DEEPGRAM_MODEL }}
+          GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
+          GROQ_MODEL=${{ secrets.GROQ_MODEL }}
+
+          REMINDER_CRON_TOKEN=${{ secrets.REMINDER_CRON_TOKEN }}
+          ENV
+
+            # Show keys but redact values
+            echo "Generated .env keys:"
+            sed 's/=.*/=***REDACTED***/' .env
+
+            sudo docker-compose pull
+            sudo docker-compose up -d
+            sudo docker-compose ps
+
+            echo "Waiting for db to settle..."
+            sleep 8
+
+            echo "Running migrations..."
+            sudo docker-compose exec -T web python manage.py migrate --noinput
+
+            echo "Collecting static files..."
+            sudo docker-compose exec -T web python manage.py collectstatic --noinput
+          EOF
+
+      - name: Install reminder cron on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            ${{ secrets.EC2_USER }}@healthmeter.duckdns.org bash -s <<EOF
+            CRON_LINE="*/15 * * * * curl -fsS 'https://healthmeter.duckdns.org/api/trigger-reminders/?token=${{ secrets.REMINDER_CRON_TOKEN }}' >> /var/log/healthmeter-reminders.log 2>&1"
+            ( crontab -l 2>/dev/null | grep -v 'trigger-reminders' ; echo "\$CRON_LINE" ) | crontab -
+            crontab -l
+          EOF
+
+      - name: Done
+        run: echo "🚀 https://healthmeter.duckdns.org"

@@ -1,0 +1,43 @@
+- name: Setup EC2 for HealthMeter app
+  hosts: web
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install Docker, docker-compose, helpers
+      apt:
+        name:
+          - docker.io
+          - docker-compose
+          - curl
+          - cron
+        state: present
+
+    - name: Enable and start Docker
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    - name: Ensure app directory exists
+      file:
+        path: /home/ubuntu/healthmeter
+        state: directory
+        owner: ubuntu
+        group: ubuntu
+        mode: "0755"
+
+    - name: Ensure cron is enabled
+      systemd:
+        name: cron
+        state: started
+        enabled: yes

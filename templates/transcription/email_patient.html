@@ -78,14 +78,26 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>Your Consultation Transcript</h1>
+            <h1>{% if no_audio %}Consultation Audio Not Captured{% else %}Your Consultation Transcript{% endif %}</h1>
         </div>
-        
+
         <div class="content">
             <p>Dear {{ patient_name }},</p>
-            
+
+            {% if no_audio %}
+            <p>Your consultation has ended. Unfortunately, we were unable to capture audio for a transcript this time — this can happen if microphones were muted, audio was very quiet, or there was a connectivity issue during recording.</p>
+
+            <div class="doctor-info">
+                <h2>Consultation Details</h2>
+                <p><strong>Doctor:</strong> {{ doctor_name }}</p>
+                <p><strong>Date:</strong> {{ appointment_date }}</p>
+                <p><strong>Time:</strong> {{ appointment_time }}</p>
+            </div>
+
+            <p>If you need a record of the consultation, please contact your doctor directly. We apologise for the inconvenience.</p>
+            {% else %}
             <p>Thank you for using HealthMeter for your healthcare needs. Below you'll find the transcript of your recent consultation:</p>
-            
+
             <div class="doctor-info">
                 <h2>Consultation Details</h2>
                 <p><strong>Doctor:</strong> {{ doctor_name }}</p>
@@ -93,17 +105,18 @@
                 <p><strong>Time:</strong> {{ appointment_time }}</p>
                 <p><strong>Duration:</strong> {{ duration }}</p>
             </div>
-            
+
             <h2>Consultation Transcript</h2>
-            
+
             <div class="transcription">
-                <p>{{ transcription }}</p>
+                <p style="white-space: pre-wrap;">{{ transcription }}</p>
             </div>
-            
+
             <p>This transcript is provided for your reference. If you have any questions about your consultation or treatment plan, please contact your doctor directly.</p>
-            
+            {% endif %}
+
             <p>For any technical issues or questions about our services, please contact our support team at <a href="mailto:support@healthmeter.com">support@healthmeter.com</a>.</p>
-            
+
             <p>Wishing you good health,</p>
             <p>The HealthMeter Team</p>
         </div>

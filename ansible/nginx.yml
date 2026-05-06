@@ -1,0 +1,58 @@
+- name: Configure Nginx + HTTPS for HealthMeter
+  hosts: web
+  become: true
+
+  vars:
+    domain_name: healthmeter.duckdns.org
+    contact_email: siddharthraturi12@gmail.com
+    app_dir: /home/ubuntu/healthmeter
+
+  tasks:
+    - name: Install Nginx and Certbot
+      apt:
+        name:
+          - nginx
+          - certbot
+          - python3-certbot-nginx
+        state: present
+        update_cache: yes
+
+    - name: Deploy Nginx site config
+      template:
+        src: templates/healthmeter.nginx.j2
+        dest: /etc/nginx/sites-available/healthmeter
+      notify: reload nginx
+
+    - name: Enable HealthMeter site
+      file:
+        src: /etc/nginx/sites-available/healthmeter
+        dest: /etc/nginx/sites-enabled/healthmeter
+        state: link
+        force: yes
+
+    - name: Remove default Nginx site
+      file:
+        path: /etc/nginx/sites-enabled/default
+        state: absent
+
+    - name: Reload Nginx
+      systemd:
+        name: nginx
+        state: reloaded
+
+    - name: Obtain Let's Encrypt cert (idempotent)
+      command: >
+        certbot --nginx
+        -d {{ domain_name }}
+        --non-interactive
+        --agree-tos
+        -m {{ contact_email }}
+        --redirect
+      args:
+        creates: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
+
+  handlers:
+    - name: reload nginx
+      systemd:
+        name: nginx
+        state: reloaded

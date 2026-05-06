@@ -1,7 +1,54 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
 
-.env
+# Virtualenvs
 venv/
 .venv/
 /.venv
-*.pyc
-_pycache_/
+env/
+
+# Django
+db.sqlite3
+db.sqlite3-journal
+*.log
+staticfiles/
+media/
+
+# Secrets / env
+.env
+.env.*
+!.env.example
+creds/
+
+# Terraform
+infra/.terraform/
+infra/.terraform.lock.hcl
+*.tfstate
+*.tfstate.backup
+*.tfvars
+
+# Ansible
+ansible/inventory.ini
+ansible/*.retry
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Backups / dumps
+*.sql
+*.dump
+backup.txt
+
+secret.txt
