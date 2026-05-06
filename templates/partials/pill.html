@@ -1,0 +1,14 @@
+{% comment %}
+Status pill. Args: label, tone (emerald|amber|indigo|red|slate|violet)
+{% endcomment %}
+{% with tone=tone|default:"slate" %}
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold tracking-wide
+  {% if tone == 'emerald' %}bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300
+  {% elif tone == 'amber' %}bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300
+  {% elif tone == 'indigo' %}bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300
+  {% elif tone == 'red' %}bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300
+  {% elif tone == 'violet' %}bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300
+  {% else %}bg-slate-100 text-slate-600 dark:bg-slate-700/60 dark:text-slate-300{% endif %}">
+  {{ label }}
+</span>
+{% endwith %}

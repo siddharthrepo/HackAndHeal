@@ -1,238 +1,306 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Patient Dashboard - HealthMeter{% endblock %}
+{% block title %}Dashboard — HealthMeter{% endblock %}
+
+{% block extra_css %}
+<style>
+  .timeline-rail {
+    background: linear-gradient(to bottom, transparent 0%, #c7d2fe 8%, #c7d2fe 92%, transparent 100%);
+  }
+  .dark .timeline-rail {
+    background: linear-gradient(to bottom, transparent 0%, #3730a3 8%, #3730a3 92%, transparent 100%);
+  }
+  .countdown-num {
+    font-variant-numeric: tabular-nums;
+  }
+  .hero-grid {
+    background-image:
+      radial-gradient(circle at 25% 0%, rgba(99,102,241,0.18), transparent 45%),
+      radial-gradient(circle at 80% 100%, rgba(139,92,246,0.16), transparent 50%);
+  }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-700 dark:from-indigo-900 dark:via-slate-900 dark:to-slate-950 py-8">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <h1 class="text-2xl md:text-3xl font-bold text-white">Welcome, {{ user.get_full_name|default:user.email }}</h1>
-        <p class="mt-2 text-indigo-100">Manage your healthcare, appointments, and records</p>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
+
+  <!-- Greeting (compact) -->
+  <div class="flex items-end justify-between mb-6">
+    <div>
+      <p class="text-xs uppercase tracking-[0.18em] text-indigo-500 dark:text-indigo-400 font-semibold">Your care</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mt-1">
+        Hello, {{ user.get_full_name|default:user.email|truncatechars:24 }}
+      </h1>
     </div>
+    <div class="hidden sm:flex items-center gap-3 text-sm">
+      <span class="text-slate-500 dark:text-slate-400">{{ upcoming_count }} upcoming · {{ completed_count }} completed</span>
+    </div>
+  </div>
+
+  <!-- ────────── HERO: Next appointment / Discovery ────────── -->
+  {% if next_appt %}
+  <section class="relative overflow-hidden rounded-3xl border border-indigo-200/60 dark:border-indigo-900/60 hero-grid bg-white dark:bg-slate-900 mb-10">
+    <div class="p-6 sm:p-8 lg:p-10 grid lg:grid-cols-[1.4fr_1fr] gap-6">
+      <!-- Left: doctor + countdown -->
+      <div>
+        <div class="flex items-start gap-4 mb-6">
+          {% include "partials/avatar.html" with user=next_appt.doctor size="lg" tone="indigo" %}
+          <div class="min-w-0">
+            <p class="text-[11px] uppercase tracking-[0.18em] text-indigo-500 dark:text-indigo-400 font-semibold mb-1">Your next appointment</p>
+            <h2 class="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white truncate">Dr. {{ next_appt.doctor.get_full_name|default:next_appt.doctor.email }}</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400 truncate">
+              {% if next_appt.doctor.doctor_profile %}{{ next_appt.doctor.doctor_profile.specialty|default:"General Practitioner" }}{% else %}General Practitioner{% endif %}
+              · {{ next_appt.appointment_date|date:"l, F j" }} at {{ next_appt.appointment_time|time:"g:i A" }}
+            </p>
+            <div class="mt-3 flex flex-wrap gap-2">
+              {% if next_appt.status == 'CONFIRMED' %}
+                {% include "partials/pill.html" with tone="emerald" label="Confirmed" %}
+              {% elif next_appt.status == 'REQUESTED' %}
+                {% include "partials/pill.html" with tone="amber" label="Awaiting payment" %}
+              {% else %}
+                {% include "partials/pill.html" with tone="slate" label=next_appt.get_status_display %}
+              {% endif %}
+              {% if next_appt.payment %}
+                {% include "partials/pill.html" with tone="indigo" label="Paid" %}
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        {% if next_appt.can_join %}
+        <a href="{% url 'join_consultation' next_appt.id %}"
+           class="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold px-6 py-3 shadow-lg shadow-indigo-500/30 transition">
+          <i class="fas fa-video"></i> Join consultation now
+        </a>
+        {% else %}
+        <div class="flex flex-wrap items-center gap-3">
+          <a href="{% url 'appointment_detail' next_appt.id %}"
+             class="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-semibold px-6 py-3 hover:opacity-90 transition">
+            <i class="fas fa-arrow-right"></i> Open appointment
+          </a>
+          {% if next_appt.status == 'REQUESTED' and not next_appt.payment %}
+            <a href="{% url 'payment_checkout' next_appt.id %}" class="text-sm font-medium text-indigo-600 dark:text-indigo-400 hover:underline">Complete payment</a>
+          {% endif %}
+          <a href="{% url 'cancel_appointment' next_appt.id %}" class="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400">Cancel</a>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Right: countdown panel -->
+      <div class="relative rounded-2xl border border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/40 p-5 backdrop-blur">
+        <p class="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 font-semibold mb-3">Time until visit</p>
+        <div id="countdown" data-seconds="{{ next_appt_seconds|default:0 }}"
+             class="grid grid-cols-4 gap-2 text-center">
+          <div><div class="countdown-num text-3xl font-bold text-slate-900 dark:text-white" data-unit="d">--</div><div class="text-[10px] uppercase tracking-wider text-slate-400">Days</div></div>
+          <div><div class="countdown-num text-3xl font-bold text-slate-900 dark:text-white" data-unit="h">--</div><div class="text-[10px] uppercase tracking-wider text-slate-400">Hours</div></div>
+          <div><div class="countdown-num text-3xl font-bold text-slate-900 dark:text-white" data-unit="m">--</div><div class="text-[10px] uppercase tracking-wider text-slate-400">Min</div></div>
+          <div><div class="countdown-num text-3xl font-bold text-indigo-600 dark:text-indigo-400" data-unit="s">--</div><div class="text-[10px] uppercase tracking-wider text-slate-400">Sec</div></div>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 space-y-1">
+          {% if next_appt.reason %}<p><span class="font-medium text-slate-700 dark:text-slate-300">Reason:</span> {{ next_appt.reason|truncatewords:14 }}</p>{% endif %}
+          <p><span class="font-medium text-slate-700 dark:text-slate-300">Doctor:</span> Dr. {{ next_appt.doctor.get_full_name|default:next_appt.doctor.email }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+  {% else %}
+  <section class="relative overflow-hidden rounded-3xl border border-indigo-200/60 dark:border-indigo-900/60 hero-grid bg-white dark:bg-slate-900 mb-10">
+    <div class="p-6 sm:p-10 text-center max-w-2xl mx-auto">
+      <div class="mx-auto h-14 w-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-5">
+        <i class="fas fa-stethoscope text-white text-xl"></i>
+      </div>
+      <h2 class="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white">No upcoming visits</h2>
+      <p class="text-slate-500 dark:text-slate-400 mt-2">Book a consultation with a doctor when you're ready.</p>
+      <form action="{% url 'doctor_search' %}" method="get" class="mt-6 flex flex-col sm:flex-row gap-2 max-w-xl mx-auto">
+        <div class="relative flex-1">
+          <i class="fas fa-search absolute left-4 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input type="text" name="query" placeholder="Search by name or specialty"
+                 class="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+        </div>
+        <button class="rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-semibold px-6 py-3 shadow-lg shadow-indigo-500/30 transition">Find doctors</button>
+      </form>
+
+      {% if featured_doctors %}
+      <div class="mt-8">
+        <p class="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 font-semibold mb-3">Available now</p>
+        <div class="flex flex-wrap justify-center gap-2">
+          {% for dp in featured_doctors %}
+          <a href="{% url 'doctor_detail' dp.user.id %}" class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm text-slate-700 dark:text-slate-200 hover:border-indigo-400 dark:hover:border-indigo-500 transition">
+            {% include "partials/avatar.html" with user=dp.user size="sm" tone="indigo" %}
+            <span class="font-medium">Dr. {{ dp.user.get_full_name|default:dp.user.email|truncatechars:18 }}</span>
+            <span class="text-xs text-slate-500">{{ dp.specialty|default:"GP" }}</span>
+          </a>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  <!-- ────────── BODY: timeline + slim rail ────────── -->
+  <div class="grid lg:grid-cols-[1fr_320px] gap-8">
+
+    <!-- Timeline -->
+    <section>
+      {% url 'patient_appointments' as appts_url %}
+      {% include "partials/section_header.html" with eyebrow="History" title="Care timeline" action_url=appts_url action_label="Full list" %}
+      {% if past_appts %}
+      <ol class="relative pl-8">
+        <span class="absolute left-3 top-0 bottom-0 w-px timeline-rail"></span>
+        {% for appt in past_appts %}
+        <li class="relative pb-6 last:pb-0">
+          <span class="absolute -left-[22px] top-1.5 h-3 w-3 rounded-full ring-4 ring-white dark:ring-slate-900
+            {% if appt.status == 'COMPLETED' %}bg-emerald-500{% elif appt.status == 'CANCELLED' %}bg-red-400{% elif appt.status == 'NO_SHOW' %}bg-amber-500{% else %}bg-indigo-500{% endif %}"></span>
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 hover:border-indigo-300 dark:hover:border-indigo-700 transition">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <p class="text-xs font-semibold text-slate-500 dark:text-slate-400 tabular-nums">{{ appt.appointment_date|date:"D, M j" }} · {{ appt.appointment_time|time:"g:i A" }}</p>
+                  {% if appt.status == 'COMPLETED' %}{% include "partials/pill.html" with tone="emerald" label="Completed" %}
+                  {% elif appt.status == 'CANCELLED' %}{% include "partials/pill.html" with tone="red" label="Cancelled" %}
+                  {% elif appt.status == 'NO_SHOW' %}{% include "partials/pill.html" with tone="amber" label="No show" %}
+                  {% else %}{% include "partials/pill.html" with tone="slate" label=appt.get_status_display %}{% endif %}
+                </div>
+                <p class="text-base font-semibold text-slate-900 dark:text-white truncate">Dr. {{ appt.doctor.get_full_name|default:appt.doctor.email }}</p>
+                {% if appt.reason %}<p class="text-sm text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">{{ appt.reason }}</p>{% endif %}
+
+                <!-- Artefact chips -->
+                <div class="flex flex-wrap gap-2 mt-3">
+                  {% if appt.transcription %}
+                    <a href="{% url 'transcription_detail' appt.transcription.id %}" class="inline-flex items-center gap-1.5 text-xs font-medium text-indigo-600 dark:text-indigo-400 hover:underline">
+                      <i class="fas fa-waveform-lines"></i> Transcript
+                    </a>
+                  {% endif %}
+                  {% if appt.soap_note %}
+                    <a href="{% url 'soap_note_detail' appt.soap_note.id %}" class="inline-flex items-center gap-1.5 text-xs font-medium text-violet-600 dark:text-violet-400 hover:underline">
+                      <i class="fas fa-notes-medical"></i> SOAP note
+                    </a>
+                  {% endif %}
+                  {% with rx=appt.prescriptions.first %}
+                  {% if rx %}
+                    <a href="{% url 'prescription_pdf' rx.id %}" class="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline">
+                      <i class="fas fa-file-prescription"></i> Prescription PDF
+                    </a>
+                  {% endif %}
+                  {% endwith %}
+                  {% if appt.follow_up %}
+                    <span class="inline-flex items-center gap-1.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                      <i class="fas fa-calendar-day"></i> Follow-up {{ appt.follow_up.follow_up_date|date:"M j" }}
+                    </span>
+                  {% endif %}
+                </div>
+              </div>
+              <a href="{% url 'appointment_detail' appt.id %}" class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition shrink-0">
+                <i class="fas fa-arrow-up-right-from-square"></i>
+              </a>
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ol>
+      {% else %}
+      <div class="rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 bg-white/50 dark:bg-slate-900/30">
+        {% include "partials/empty_state.html" with icon="fa-clock-rotate-left" title="No past visits yet" hint="After your first consultation, your transcripts, SOAP notes and prescriptions will appear here." %}
+      </div>
+      {% endif %}
+    </section>
+
+    <!-- Slim rail -->
+    <aside class="space-y-5">
+      <!-- Health snapshot -->
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <div class="flex items-center gap-3 mb-4">
+          {% include "partials/avatar.html" with user=user size="md" tone="indigo" %}
+          <div class="min-w-0">
+            <p class="text-sm font-semibold text-slate-900 dark:text-white truncate">{{ user.get_full_name|default:user.email }}</p>
+            <p class="text-xs text-slate-500 dark:text-slate-400 truncate">{{ user.email }}</p>
+          </div>
+        </div>
+        <dl class="space-y-2.5 text-sm">
+          <div class="flex justify-between items-center">
+            <dt class="text-slate-500 dark:text-slate-400">Phone</dt>
+            <dd class="font-medium text-slate-700 dark:text-slate-200">{{ user.profile.phone_number|default:"—" }}</dd>
+          </div>
+          <div class="flex justify-between items-center">
+            <dt class="text-slate-500 dark:text-slate-400">DOB</dt>
+            <dd class="font-medium text-slate-700 dark:text-slate-200">{{ user.profile.date_of_birth|date:"M j, Y"|default:"—" }}</dd>
+          </div>
+          <div class="flex justify-between items-start gap-3">
+            <dt class="text-slate-500 dark:text-slate-400 shrink-0">Address</dt>
+            <dd class="font-medium text-slate-700 dark:text-slate-200 text-right truncate">{{ user.profile.address|default:"—" }}</dd>
+          </div>
+        </dl>
+        <a href="{% url 'edit_profile' %}" class="mt-4 inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline">
+          <i class="fas fa-pen text-[10px]"></i> Update profile
+        </a>
+      </div>
+
+      <!-- Quick links -->
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5">
+        <p class="text-[11px] uppercase tracking-[0.18em] text-slate-500 dark:text-slate-400 font-semibold mb-3">Shortcuts</p>
+        <nav class="space-y-1">
+          <a href="{% url 'doctor_search' %}" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-sm font-medium text-slate-700 dark:text-slate-200 group">
+            <span class="flex items-center gap-3"><i class="fas fa-magnifying-glass text-indigo-500 w-4"></i> Find a doctor</span>
+            <i class="fas fa-arrow-right text-xs text-slate-400 group-hover:text-indigo-500"></i>
+          </a>
+          <a href="{% url 'patient_appointments' %}" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-sm font-medium text-slate-700 dark:text-slate-200 group">
+            <span class="flex items-center gap-3"><i class="fas fa-calendar-days text-indigo-500 w-4"></i> All appointments</span>
+            <i class="fas fa-arrow-right text-xs text-slate-400 group-hover:text-indigo-500"></i>
+          </a>
+          <a href="{% url 'profile' %}" class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/20 text-sm font-medium text-slate-700 dark:text-slate-200 group">
+            <span class="flex items-center gap-3"><i class="fas fa-user text-indigo-500 w-4"></i> View profile</span>
+            <i class="fas fa-arrow-right text-xs text-slate-400 group-hover:text-indigo-500"></i>
+          </a>
+        </nav>
+      </div>
+
+      {% if health_tips %}
+      <!-- Health tips -->
+      <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-gradient-to-br from-indigo-50 to-violet-50 dark:from-indigo-950/40 dark:to-violet-950/40 p-5">
+        <p class="text-[11px] uppercase tracking-[0.18em] text-indigo-600 dark:text-indigo-400 font-semibold mb-3">Health tips</p>
+        <ul class="space-y-3">
+          {% for tip in health_tips %}
+          <li>
+            <p class="text-sm font-semibold text-slate-900 dark:text-white line-clamp-1">{{ tip.title }}</p>
+            <p class="text-xs text-slate-600 dark:text-slate-400 line-clamp-2 mt-0.5">{{ tip.content|striptags }}</p>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </aside>
+
+  </div>
 </div>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-    <!-- Stats Overview -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <div class="glass rounded-xl p-6">
-            <div class="flex items-center">
-                <div class="bg-indigo-100 dark:bg-indigo-900/30 rounded-full p-3 mr-4">
-                    <svg class="h-8 w-8 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-slate-500 dark:text-slate-400 text-sm">Upcoming Appointments</p>
-                    <h3 class="text-2xl font-bold text-slate-800 dark:text-white">
-                        {% with count=user.patient_appointments.count %}
-                        {{ count }}
-                        {% endwith %}
-                    </h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="glass rounded-xl p-6">
-            <div class="flex items-center">
-                <div class="bg-emerald-100 dark:bg-emerald-900/30 rounded-full p-3 mr-4">
-                    <svg class="h-8 w-8 text-emerald-500 dark:text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-slate-500 dark:text-slate-400 text-sm">Completed Consultations</p>
-                    <h3 class="text-2xl font-bold text-slate-800 dark:text-white">
-                        {% with count=user.patient_appointments.filter.count %}
-                        {{ count|default:"0" }}
-                        {% endwith %}
-                    </h3>
-                </div>
-            </div>
-        </div>
-
-        <div class="glass rounded-xl p-6">
-            <div class="flex items-center">
-                <div class="bg-violet-100 dark:bg-violet-900/30 rounded-full p-3 mr-4">
-                    <svg class="h-8 w-8 text-violet-500 dark:text-violet-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
-                    </svg>
-                </div>
-                <div>
-                    <p class="text-slate-500 dark:text-slate-400 text-sm">Medical Records</p>
-                    <h3 class="text-2xl font-bold text-slate-800 dark:text-white">
-                        {% with count=user.patient_appointments.filter.count %}
-                        {{ count|default:"0" }}
-                        {% endwith %}
-                    </h3>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Dashboard Content -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <!-- Left Column - Upcoming Appointments -->
-        <div class="md:col-span-2">
-            <div class="glass rounded-xl mb-6">
-                <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4 flex items-center justify-between">
-                    <h2 class="text-lg font-medium text-slate-800 dark:text-white">Upcoming Appointments</h2>
-                    <a href="{% url 'patient_appointments' %}" class="text-sm text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">View all</a>
-                </div>
-                <div class="px-6 py-4">
-                    {% with upcoming_appointments=user.patient_appointments.all|slice:":5" %}
-                    {% if upcoming_appointments %}
-                        <div class="space-y-4">
-                            {% for appointment in upcoming_appointments %}
-                            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4 {% if forloop.last %}border-b-0 pb-0{% endif %}">
-                                <div class="flex items-center">
-                                    <span class="h-10 w-10 text-indigo-500 dark:text-indigo-400 rounded-full p-2 mr-4 bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </span>
-                                    <div>
-                                        <p class="font-medium text-slate-800 dark:text-white">Dr. {{ appointment.doctor.get_full_name }}</p>
-                                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ appointment.appointment_date|date:"F j, Y" }} at {{ appointment.appointment_time|time:"g:i A" }}</p>
-                                        <span class="text-xs px-2 py-1 rounded-full {% if appointment.status == 'CONFIRMED' %}bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400{% elif appointment.status == 'REQUESTED' %}bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400{% else %}bg-slate-100 text-slate-800 dark:bg-slate-700 dark:text-slate-300{% endif %}">
-                                            {{ appointment.get_status_display }}
-                                        </span>
-                                    </div>
-                                </div>
-                                <a href="{% url 'appointment_detail' appointment.id %}" class="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                    </svg>
-                                </a>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="py-4 text-center">
-                            <svg class="h-12 w-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                            </svg>
-                            <p class="text-slate-600 dark:text-slate-400">You don't have any upcoming appointments.</p>
-                            <a href="{% url 'doctor_search' %}" class="mt-3 inline-block text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">Find a doctor</a>
-                        </div>
-                    {% endif %}
-                    {% endwith %}
-                </div>
-            </div>
-
-            <!-- Recent Consultations -->
-            <div class="glass rounded-xl">
-                <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
-                    <h2 class="text-lg font-medium text-slate-800 dark:text-white">Recent Consultations</h2>
-                </div>
-                <div class="px-6 py-4">
-                    {% with past_appointments=user.patient_appointments.filter.all|slice:":3" %}
-                    {% if past_appointments %}
-                        <div class="space-y-4">
-                            {% for appointment in past_appointments %}
-                            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4 {% if forloop.last %}border-b-0 pb-0{% endif %}">
-                                <div class="flex items-center">
-                                    <span class="h-10 w-10 text-emerald-500 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 rounded-full flex items-center justify-center p-2 mr-4">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    </span>
-                                    <div>
-                                        <p class="font-medium text-slate-800 dark:text-white">Dr. {{ appointment.doctor.get_full_name }}</p>
-                                        <p class="text-sm text-slate-500 dark:text-slate-400">{{ appointment.appointment_date|date:"F j, Y" }}</p>
-                                        {% if appointment.transcription %}
-                                        <span class="text-xs px-2 py-1 rounded-full bg-indigo-100 text-indigo-800 dark:bg-indigo-900/30 dark:text-indigo-400">
-                                            Transcription Available
-                                        </span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                                <a href="{% url 'appointment_detail' appointment.id %}" class="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">
-                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-                                    </svg>
-                                </a>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="py-4 text-center">
-                            <svg class="h-12 w-12 text-slate-400 dark:text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                            </svg>
-                            <p class="text-slate-600 dark:text-slate-400">You don't have any past consultations.</p>
-                        </div>
-                    {% endif %}
-                    {% endwith %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Right Column -->
-        <div>
-            <!-- Profile Summary -->
-            <div class="glass rounded-xl mb-6">
-                <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
-                    <h2 class="text-lg font-medium text-slate-800 dark:text-white">Your Profile</h2>
-                </div>
-                <div class="px-6 py-4">
-                    <div class="flex items-center mb-4">
-                        <div class="bg-indigo-100 dark:bg-indigo-900/30 rounded-full p-2 mr-4">
-                            <svg class="h-8 w-8 text-indigo-500 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                            </svg>
-                        </div>
-                        <div>
-                            <h3 class="font-medium text-slate-800 dark:text-white">{{ user.get_full_name|default:user.email }}</h3>
-                            <p class="text-sm text-slate-500 dark:text-slate-400">{{ user.email }}</p>
-                        </div>
-                    </div>
-                    <div class="space-y-2 text-sm text-slate-600 dark:text-slate-400">
-                        <p><span class="font-medium text-slate-700 dark:text-slate-300">Phone:</span> {{ user.profile.phone_number|default:"Not provided" }}</p>
-                        <p><span class="font-medium text-slate-700 dark:text-slate-300">Date of Birth:</span> {{ user.profile.date_of_birth|date:"F j, Y"|default:"Not provided" }}</p>
-                        <p><span class="font-medium text-slate-700 dark:text-slate-300">Address:</span> {{ user.profile.address|default:"Not provided" }}</p>
-                    </div>
-                    <div class="mt-4">
-                        <a href="{% url 'edit_profile' %}" class="text-indigo-500 dark:text-indigo-400 hover:text-indigo-600 text-sm font-medium">
-                            Update Profile
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Quick Links -->
-            <div class="glass rounded-xl">
-                <div class="border-b border-slate-200 dark:border-slate-700 px-6 py-4">
-                    <h2 class="text-lg font-medium text-slate-800 dark:text-white">Quick Links</h2>
-                </div>
-                <div class="px-6 py-4">
-                    <ul class="space-y-3">
-                        <li>
-                            <a href="{% url 'doctor_search' %}" class="flex items-center text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">
-                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-                                Find a Doctor
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'patient_appointments' %}" class="flex items-center text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">
-                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                                Manage Appointments
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'profile' %}" class="flex items-center text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">
-                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                View Profile
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{% url 'edit_profile' %}" class="flex items-center text-indigo-500 dark:text-indigo-400 hover:text-indigo-600">
-                                <svg class="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                                Edit Personal Information
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+{% if next_appt %}
+<script>
+(function () {
+  var el = document.getElementById('countdown');
+  if (!el) return;
+  var seconds = parseInt(el.dataset.seconds || '0', 10);
+  var units = el.querySelectorAll('[data-unit]');
+  function tick() {
+    if (seconds <= 0) {
+      units.forEach(function (u) { u.textContent = '00'; });
+      return;
+    }
+    var d = Math.floor(seconds / 86400);
+    var h = Math.floor((seconds % 86400) / 3600);
+    var m = Math.floor((seconds % 3600) / 60);
+    var s = seconds % 60;
+    var map = { d: d, h: h, m: m, s: s };
+    units.forEach(function (u) {
+      var key = u.getAttribute('data-unit');
+      u.textContent = String(map[key]).padStart(2, '0');
+    });
+    seconds -= 1;
+  }
+  tick();
+  setInterval(tick, 1000);
+})();
+</script>
+{% endif %}
 {% endblock %}

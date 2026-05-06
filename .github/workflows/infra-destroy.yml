@@ -1,0 +1,114 @@
+name: Infrastructure Destroy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  destroy:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: hashicorp/setup-terraform@v3
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Get EC2 IP from Terraform State
+        id: get_ip
+        run: |
+          cd infra
+          terraform init -reconfigure -input=false
+          EC2_IP=$(terraform output -raw ec2_public_ip 2>/dev/null || echo "")
+          echo "ec2_ip=$EC2_IP" >> $GITHUB_OUTPUT
+          if [ -n "$EC2_IP" ]; then
+            echo "EC2 IP found: $EC2_IP"
+          else
+            echo "No EC2 IP in state — proceeding to destroy without backup"
+          fi
+
+      - name: Setup SSH
+        if: steps.get_ip.outputs.ec2_ip != ''
+        run: |
+          mkdir -p ~/.ssh
+          printf "%s" "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ steps.get_ip.outputs.ec2_ip }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Backup database + media to S3
+        if: steps.get_ip.outputs.ec2_ip != ''
+        run: |
+          set +e
+          IP="${{ steps.get_ip.outputs.ec2_ip }}"
+          USER="${{ secrets.EC2_USER }}"
+
+          echo "=== Dumping database on EC2 ==="
+          ssh -o StrictHostKeyChecking=no -o ConnectTimeout=30 -i ~/.ssh/id_rsa $USER@$IP bash -s <<'ENDSSH'
+            set -e
+            CONTAINER_NAME="healthmeter_db"
+            if ! sudo docker ps --format '{{.Names}}' | grep -q "^${CONTAINER_NAME}$"; then
+              echo "Database container not running. Skipping dump."
+              exit 0
+            fi
+            if [ ! -f /home/ubuntu/healthmeter/.env ]; then
+              echo ".env not found. Skipping dump."
+              exit 0
+            fi
+            set -a; source /home/ubuntu/healthmeter/.env; set +a
+
+            sudo docker exec ${CONTAINER_NAME} pg_dump \
+              -U "${POSTGRES_USER}" \
+              -d "${POSTGRES_DB}" \
+              --no-owner --no-acl --clean --if-exists \
+              > /tmp/healthmeter_db.sql
+
+            echo "Dump size: $(du -h /tmp/healthmeter_db.sql | cut -f1)"
+
+            # Tar the media volume too (uploaded files)
+            sudo tar czf /tmp/healthmeter_media.tar.gz \
+              -C /var/lib/docker/volumes/healthmeter_media_files/_data . 2>/dev/null || \
+              echo "No media volume, skipping media tar."
+          ENDSSH
+
+          echo "=== Pulling artefacts back to runner ==="
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            $USER@$IP:/tmp/healthmeter_db.sql ./healthmeter_db.sql 2>/dev/null || echo "no db dump"
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa \
+            $USER@$IP:/tmp/healthmeter_media.tar.gz ./healthmeter_media.tar.gz 2>/dev/null || echo "no media tar"
+
+          STAMP=$(date -u +%Y%m%dT%H%M%SZ)
+          if [ -s ./healthmeter_db.sql ]; then
+            aws s3 cp ./healthmeter_db.sql s3://healthmeter-db-backups/db/${STAMP}.sql
+            aws s3 cp ./healthmeter_db.sql s3://healthmeter-db-backups/db/latest.sql
+            echo "✅ DB uploaded to s3://healthmeter-db-backups/db/${STAMP}.sql"
+          fi
+          if [ -s ./healthmeter_media.tar.gz ]; then
+            aws s3 cp ./healthmeter_media.tar.gz s3://healthmeter-db-backups/media/${STAMP}.tar.gz
+            aws s3 cp ./healthmeter_media.tar.gz s3://healthmeter-db-backups/media/latest.tar.gz
+            echo "✅ Media uploaded to s3://healthmeter-db-backups/media/${STAMP}.tar.gz"
+          fi
+          rm -f ./healthmeter_db.sql ./healthmeter_media.tar.gz
+          set -e
+
+      - name: Empty backup bucket files (keep bucket itself; TF will drop the bucket resource)
+        if: false  # Disabled — we WANT backups to survive a destroy. Re-enable with care.
+        run: |
+          aws s3 rm s3://healthmeter-db-backups --recursive
+
+      - name: Terraform Destroy
+        run: |
+          cd infra
+          terraform init -reconfigure -input=false
+          # The S3 bucket is versioned — empty all object versions before destroy
+          aws s3api list-object-versions --bucket healthmeter-db-backups --output json 2>/dev/null \
+            | jq -r '(.Versions[]?, .DeleteMarkers[]?) | "\(.Key) \(.VersionId)"' \
+            | while read key version; do
+                aws s3api delete-object --bucket healthmeter-db-backups --key "$key" --version-id "$version" >/dev/null
+              done || true
+          terraform destroy -auto-approve

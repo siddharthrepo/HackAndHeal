@@ -56,7 +56,18 @@ class HomeView(TemplateView):
         
         # Get featured health tips
         context['health_tips'] = HealthTip.objects.filter(is_featured=True).order_by('-created_at')[:3]
-        
+
+        # Platform stats for hero stats band
+        context['stat_doctors'] = User.objects.filter(role=User.Role.DOCTOR, is_active=True).count()
+        context['stat_patients'] = User.objects.filter(role=User.Role.PATIENT, is_active=True).count()
+        context['stat_consultations'] = Appointment.objects.filter(
+            status=Appointment.Status.COMPLETED
+        ).count()
+        context['stat_specialties'] = (DoctorProfile.objects
+                                       .exclude(specialty__isnull=True)
+                                       .exclude(specialty__exact='')
+                                       .values('specialty').distinct().count())
+
         context['fallback_tips'] = [
             {
                 'icon': 'fa-tint',

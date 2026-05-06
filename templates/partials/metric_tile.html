@@ -1,0 +1,39 @@
+{% comment %}
+Args: label, value, delta (optional, e.g. "+12%"), delta_tone (emerald|red|slate), icon (fa class), tone (indigo|emerald|violet|amber), spark (list of ints, optional)
+{% endcomment %}
+{% with tone=tone|default:"indigo" %}
+<div class="relative overflow-hidden rounded-2xl bg-white dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 p-5 hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors">
+  <div class="flex items-start justify-between">
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 mb-2">
+        <span class="inline-flex h-7 w-7 items-center justify-center rounded-lg
+          {% if tone == 'emerald' %}bg-emerald-50 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400
+          {% elif tone == 'violet' %}bg-violet-50 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400
+          {% elif tone == 'amber' %}bg-amber-50 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400
+          {% else %}bg-indigo-50 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400{% endif %}">
+          <i class="fas {{ icon|default:'fa-chart-line' }} text-xs"></i>
+        </span>
+        <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider truncate">{{ label }}</p>
+      </div>
+      <p class="text-3xl font-bold text-slate-900 dark:text-white tabular-nums leading-none">{{ value }}</p>
+      {% if delta %}
+      <p class="mt-2 text-xs font-medium
+        {% if delta_tone == 'red' %}text-red-600 dark:text-red-400
+        {% elif delta_tone == 'slate' %}text-slate-500 dark:text-slate-400
+        {% else %}text-emerald-600 dark:text-emerald-400{% endif %}">
+        {{ delta }}
+      </p>
+      {% endif %}
+    </div>
+    {% if spark %}
+    <svg viewBox="0 0 100 32" class="w-20 h-8 ml-2 shrink-0
+      {% if tone == 'emerald' %}text-emerald-500
+      {% elif tone == 'violet' %}text-violet-500
+      {% elif tone == 'amber' %}text-amber-500
+      {% else %}text-indigo-500{% endif %}" preserveAspectRatio="none">
+      <polyline fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="{{ spark }}" />
+    </svg>
+    {% endif %}
+  </div>
+</div>
+{% endwith %}

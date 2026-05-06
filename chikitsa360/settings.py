@@ -13,13 +13,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 env.read_env(os.path.join(BASE_DIR, ".env"), overwrite=True)
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-key-for-dev')
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', os.environ.get('SECRET_KEY', 'django-insecure-key-for-dev'))
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 
-# Allow all Replit domains
-ALLOWED_HOSTS = ['*']
+_allowed = os.environ.get('ALLOWED_HOSTS', '*')
+ALLOWED_HOSTS = [h.strip() for h in _allowed.split(',') if h.strip()] or ['*']
+
+# Ensure local dev always works even if ALLOWED_HOSTS is set to a specific domain in .env
+if DEBUG:
+    for _local in ('localhost', '127.0.0.1', '[::1]'):
+        if _local not in ALLOWED_HOSTS:
+            ALLOWED_HOSTS.append(_local)
 
 # Application definition
 INSTALLED_APPS = [
@@ -77,32 +83,32 @@ WSGI_APPLICATION = 'chikitsa360.wsgi.application'
 ASGI_APPLICATION = 'chikitsa360.asgi.application'
 
 # Database
-DEBUG = os.getenv("DEBUG", "True") == "True"
+# In DEBUG (local dev): prefer PG*/POSTGRES_* env vars (talk to local Postgres),
+#   so a stale DATABASE_URL pointing at a remote host doesn't silently slow dev down.
+# In production: prefer DATABASE_URL (set by docker-compose / deploy.yml from secrets).
 if DEBUG:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('PGDATABASE', 'chikitsa360'),
-            'USER': os.environ.get('PGUSER', 'postgres'),
-            'PASSWORD': os.environ.get('PGPASSWORD', ''),
-            'HOST': os.environ.get('PGHOST', 'localhost'),
-            'PORT': os.environ.get('PGPORT', '5432'),
+            'NAME': os.environ.get('POSTGRES_DB', os.environ.get('PGDATABASE', 'chikitsa360')),
+            'USER': os.environ.get('POSTGRES_USER', os.environ.get('PGUSER', 'postgres')),
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', os.environ.get('PGPASSWORD', '')),
+            'HOST': os.environ.get('POSTGRES_HOST', os.environ.get('PGHOST', 'localhost')),
+            'PORT': os.environ.get('POSTGRES_PORT', os.environ.get('PGPORT', '5432')),
         }
     }
 else:
     DATABASES = {
-        'default': dj_database_url.config(default=os.getenv('DATABASE_URL'))
+        'default': dj_database_url.config(default=os.environ.get('DATABASE_URL'))
     }
 
+# Persistent DB connections (saves ~50–500ms per request in prod; harmless in dev)
+DATABASES['default']['CONN_MAX_AGE'] = int(os.environ.get('CONN_MAX_AGE', 60))
 
-# Allow all origins for CSRF (not recommended for production)
-# Use environment variable to add specific origins when needed
-CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else []
-CSRF_TRUSTED_ORIGINS += ['https://bcca-117-55-241-163.ngrok-free.app']
-
-ROOT_URLCONF = 'chikitsa360.urls'
-WSGI_APPLICATION = 'chikitsa360.wsgi.application'
-ASGI_APPLICATION = 'chikitsa360.asgi.application'
+# CSRF trusted origins — comma-separated env var (e.g. "https://healthmeter.duckdns.org")
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()
+]
 # Channel layers for WebSockets
 CHANNEL_LAYERS = {
     "default": {
@@ -169,6 +175,10 @@ STATICFILES_DIRS = [
 ]
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
+# Media (user-uploaded files: prescription PDFs, audio dumps, etc.)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -179,14 +189,15 @@ LOGOUT_REDIRECT_URL = '/'
 
 # Email settings
 SITE_ID = 1
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Replace with your SMTP host
-EMAIL_PORT = 587  # Common for TLS; use 465 for SSL
-EMAIL_USE_TLS = True  # Use True if using TLS
-EMAIL_USE_SSL = False  # Use False if using TLS
-EMAIL_HOST_USER = 'carzone1806@gmail.com'
-EMAIL_HOST_PASSWORD = 'onovdkxaixykyzef'
-EMAIL_TIMEOUT = 30  # Adjust as needed
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp.gmail.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', 587))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL', 'False') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', EMAIL_HOST_USER or 'noreply@healthmeter.local')
+EMAIL_TIMEOUT = 30
 
 # Razorpay settings
 RAZORPAY_KEY_ID = os.environ.get('RAZORPAY_KEY_ID', '')
