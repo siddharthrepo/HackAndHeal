@@ -264,6 +264,11 @@ else:
     SESSION_COOKIE_SECURE = True  # Only send session cookies over HTTPS
     CSRF_COOKIE_SECURE = True  # Only send CSRF cookies over HTTPS
 
+    # Trust nginx's X-Forwarded-Proto header so Django knows the original request
+    # was HTTPS even though the proxied connection to daphne is plain HTTP.
+    # Without this, SECURE_SSL_REDIRECT loops forever behind nginx.
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
     # HTTP Strict Transport Security
 
     # Additional protections
