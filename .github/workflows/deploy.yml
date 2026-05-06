@@ -90,16 +90,18 @@ jobs:
             echo "Generated .env keys:"
             sed 's/=.*/=***REDACTED***/' .env
 
-            sudo docker-compose pull
-            sudo docker-compose up -d
-            sudo docker-compose ps
+            # Compose V2: `docker compose` (space). Old `docker-compose` v1 crashes
+            # with KeyError: 'ContainerConfig' on modern Docker engines.
+            sudo docker compose pull
+            sudo docker compose down --remove-orphans
+            sudo docker compose up -d
+            sudo docker compose ps
 
             # migrate + collectstatic happen inside the container's CMD on startup,
             # so no extra Python processes spawn here (avoids OOM on t2.micro).
-            # Wait briefly and tail the web log to confirm boot.
             sleep 5
-            echo "=== web container boot log (last 40 lines) ==="
-            sudo docker-compose logs --tail=40 web
+            echo "=== web container boot log (last 60 lines) ==="
+            sudo docker compose logs --tail=60 web
           EOF
 
       - name: Install reminder cron on EC2
