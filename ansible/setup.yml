@@ -79,11 +79,15 @@
       command: mkswap /swapfile
       when: not swapfile_stat.stat.exists
 
+    - name: Get currently-active swap devices
+      command: swapon --show=NAME --noheadings
+      register: active_swap
+      changed_when: false
+      failed_when: false   # exit 0 even when no swap is active
+
     - name: Enable swap (active until reboot)
       command: swapon /swapfile
-      register: swapon_result
-      failed_when: swapon_result.rc != 0 and 'already' not in (swapon_result.stderr | default(''))
-      changed_when: "'already' not in (swapon_result.stderr | default(''))"
+      when: "'/swapfile' not in (active_swap.stdout | default(''))"
 
     - name: Persist swap across reboots
       lineinfile:
