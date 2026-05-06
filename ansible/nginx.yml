@@ -40,7 +40,11 @@
         name: nginx
         state: reloaded
 
-    - name: Obtain Let's Encrypt cert (idempotent)
+    # Always re-run certbot. The previous task overwrites the nginx config from
+    # our template, which wipes out the SSL block certbot adds. Re-running with
+    # --keep-until-expiring is safe: Let's Encrypt won't re-issue a current cert,
+    # certbot just re-applies the SSL block to the nginx config and reloads.
+    - name: Obtain / re-apply Let's Encrypt cert (idempotent)
       command: >
         certbot --nginx
         -d {{ domain_name }}
@@ -48,8 +52,7 @@
         --agree-tos
         -m {{ contact_email }}
         --redirect
-      args:
-        creates: /etc/letsencrypt/live/{{ domain_name }}/fullchain.pem
+        --keep-until-expiring
 
   handlers:
     - name: reload nginx
