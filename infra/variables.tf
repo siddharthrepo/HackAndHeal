@@ -7,7 +7,7 @@ variable "aws_region" {
 variable "key_name" {
   description = "EC2 key pair name (must already exist in AWS)"
   type        = string
-  default     = "aws-key-pair-30/2025"
+  default     = "new_aws_key"
 }
 
 variable "instance_type" {

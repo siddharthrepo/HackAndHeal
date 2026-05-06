@@ -74,7 +74,8 @@ class TranscriptionService:
             # Deepgram params — model is env-overridable
             # Defaults: nova-3 (latest, best general English incl. Indian English)
             # Try "nova-2-medical" if you want clinical-domain tuning (English-only).
-            model = os.environ.get('DEEPGRAM_MODEL', 'nova-3')
+            # Fall back to nova-3 if env var is unset OR empty (empty .env line)
+            model = os.environ.get('DEEPGRAM_MODEL') or 'nova-3'
             params = {
                 "model": model,
                 "smart_format": "true",   # better numbers/dates/dosages

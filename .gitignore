@@ -50,3 +50,5 @@ Thumbs.db
 *.sql
 *.dump
 backup.txt
+
+secret.txt
