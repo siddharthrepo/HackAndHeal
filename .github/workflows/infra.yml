@@ -32,13 +32,16 @@ jobs:
       - name: Update DuckDNS record
         run: |
           echo "Updating DuckDNS to point healthmeter -> $EC2_IP"
-          curl -s "https://www.duckdns.org/update?domains=healthmeter&token=${{ secrets.DUCKDNS_TOKEN }}&ip=$EC2_IP"
-          echo
+          response=$(curl -s "https://www.duckdns.org/update?domains=healthmeter&token=${{ secrets.DUCKDNS_TOKEN }}&ip=$EC2_IP")
+          echo "DuckDNS response: $response"
+          if [ "$response" != "OK" ]; then
+            echo "DuckDNS update failed" && exit 1
+          fi
 
       - name: Install Ansible
         run: |
           sudo apt update
-          sudo apt install -y ansible
+          sudo apt install -y ansible dnsutils
 
       - name: Setup SSH
         run: |
@@ -47,6 +50,8 @@ jobs:
           chmod 600 ~/.ssh/id_rsa
 
       - name: Wait for SSH
+        # First connect uses the IP directly — DNS may not have propagated yet,
+        # and we just need a TCP-level liveness signal before Ansible runs.
         run: |
           for i in $(seq 1 40); do
             if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=10 ubuntu@$EC2_IP "echo SSH ready"; then
@@ -57,11 +62,30 @@ jobs:
           done
           echo "SSH never came up" && exit 1
 
+      - name: Wait for DNS to point at this instance
+        # Critical: certbot's HTTP-01 challenge resolves healthmeter.duckdns.org
+        # via public DNS. If this returns an old IP, LE hits the wrong server
+        # and validation fails. Poll an authoritative resolver until it agrees.
+        run: |
+          for i in $(seq 1 30); do
+            resolved=$(dig +short @1.1.1.1 healthmeter.duckdns.org A | tail -1)
+            echo "Attempt $i: resolved=$resolved expected=$EC2_IP"
+            if [ "$resolved" = "$EC2_IP" ]; then
+              echo "DNS propagated."
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "DNS did not propagate to $EC2_IP within 150s" && exit 1
+
       - name: Generate Ansible inventory
+        # Use the hostname (not the IP). Ansible's SSH does a fresh DNS lookup
+        # each connect — so if the EC2 IP ever changes, the next workflow run
+        # picks it up automatically as long as DuckDNS is current.
         run: |
           cat > ansible/inventory.ini <<EOF
           [web]
-          $EC2_IP ansible_user=ubuntu
+          healthmeter.duckdns.org ansible_user=ubuntu
           EOF
 
       - name: Run Ansible (Docker)
