@@ -4,14 +4,14 @@
  * Uses Daily.co call-object mode (NOT iframe) so we have direct access to
  * every participant's MediaStreamTrack.  This lets us:
  *   - Render local + remote video ourselves
- *   - Mix local + remote audio via the Web Audio API
- *   - Record the mixed stream and send it for transcription on call end
+ *   - Record local and remote audio into SEPARATE streams
+ *   - Send both files to the backend for per-speaker transcription
  *
- * Fixes applied vs. the previous iframe-based version:
- *   1. Records BOTH sides of the conversation (Web Audio mix)
- *   2. Correct MIME type (audio/webm throughout)
- *   3. Single cleanup path — no duplicate transcription submissions
- *   4. XSS-safe chat rendering
+ * Why two recorders instead of a mixed stream:
+ *   Whisper is a single-speaker ASR. Mixing local + remote into one track
+ *   causes overlap/clipping and Whisper drops most of the conversation.
+ *   Recording each speaker in isolation lets the backend transcribe each
+ *   cleanly, then merge the segments by timestamp with speaker labels.
  */
 
 // ── State ─────────────────────────────────────────────────────
@@ -21,13 +21,13 @@ let callCleanupDone = false;
 let callStartTime = null;
 let callTimerInterval = null;
 
-// Audio recording
+// Per-speaker audio recording (one recorder per side)
 let audioContext = null;
-let mixedDestination = null;
-let audioRecorder = null;
-let audioChunks = [];
-let isRecording = false;
-let audioSources = {}; // keyed by 'local' or participant session_id
+let recorders = {
+    local:  { destination: null, recorder: null, chunks: [], source: null, started: false },
+    remote: { destination: null, recorder: null, chunks: [], source: null, started: false },
+};
+let remoteSessionId = null; // Daily.co session id of the remote participant
 
 // Transcription
 let transcriptionInProgress = false;
@@ -36,6 +36,7 @@ let transcriptionInProgress = false;
 let roomName = null;
 let token = null;
 let appointmentId = null;
+let localRole = null; // 'doctor' or 'patient'
 
 // DOM element refs
 let localVideoEl, remoteVideoEl, waitingOverlay;
@@ -65,6 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     roomName      = document.getElementById('room-name')?.value;
     token         = document.getElementById('room-token')?.value;
     appointmentId = document.getElementById('appointment-id')?.value;
+    localRole     = document.getElementById('local-role')?.value || 'patient';
 
     // Wire up buttons
     if (endCallBtn)   endCallBtn.addEventListener('click', endCall);
@@ -141,8 +143,11 @@ function handleParticipantLeft(event) {
     const pid = event.participant.session_id;
     console.log('Participant left:', pid);
 
-    // Clean up their audio
-    removeTrackFromMix(pid);
+    // Disconnect their audio source from the remote recorder, but DON'T stop
+    // the recorder — they may rejoin, and stopping now would discard chunks.
+    if (pid === remoteSessionId) {
+        disconnectSource('remote');
+    }
     document.getElementById(`remote-audio-${pid}`)?.remove();
 
     // Clear remote video
@@ -160,7 +165,7 @@ function handleTrackStarted(event) {
             localVideoEl.srcObject = new MediaStream([track]);
         }
         if (track.kind === 'audio') {
-            addTrackToMix('local', track);
+            attachTrackToRecorder('local', track);
         }
     } else {
         if (track.kind === 'video' && remoteVideoEl) {
@@ -170,8 +175,8 @@ function handleTrackStarted(event) {
         if (track.kind === 'audio') {
             // Play remote audio so the user can hear the other person
             playRemoteAudio(participant.session_id, track);
-            // Also add to the recording mix
-            addTrackToMix(participant.session_id, track);
+            remoteSessionId = participant.session_id;
+            attachTrackToRecorder('remote', track);
         }
     }
 }
@@ -186,9 +191,9 @@ function handleTrackStopped(event) {
     if (!participant.local && track.kind === 'video' && remoteVideoEl) {
         remoteVideoEl.srcObject = null;
     }
-    if (!participant.local && track.kind === 'audio') {
-        removeTrackFromMix(participant.session_id);
-    }
+    // Audio track-stopped during a call (e.g. mute) doesn't kill the recorder.
+    // Recorders keep running on a silent stream so timestamps stay aligned;
+    // the user's mic toggling on/off just produces a quiet section in the file.
 }
 
 function handleCallError(event) {
@@ -219,9 +224,11 @@ function playRemoteAudio(participantId, track) {
     el.play().catch(err => console.warn('Audio autoplay blocked:', err));
 }
 
-// ── Audio Mixing & Recording ──────────────────────────────────
-// We use the Web Audio API to merge every participant's audio into a
-// single MediaStream, then record that stream with MediaRecorder.
+// ── Per-Speaker Audio Recording ───────────────────────────────
+// Each side gets its own MediaStreamDestination + MediaRecorder so that:
+//   - Whisper sees clean single-speaker audio (no overlap, no clipping)
+//   - The backend can label segments by speaker (Doctor / Patient)
+//   - Both files share a wall-clock start, so segment timestamps align
 
 function setupAudioRecording() {
     try {
@@ -229,102 +236,98 @@ function setupAudioRecording() {
         if (audioContext.state === 'suspended') {
             audioContext.resume();
         }
-        mixedDestination = audioContext.createMediaStreamDestination();
-        // Recording starts once the first audio track is added (see addTrackToMix)
+        recorders.local.destination  = audioContext.createMediaStreamDestination();
+        recorders.remote.destination = audioContext.createMediaStreamDestination();
+        // Recorders are created lazily once each side's first track arrives.
     } catch (err) {
         console.error('AudioContext setup failed:', err);
         displayError('Audio recording setup failed');
     }
 }
 
-function addTrackToMix(id, track) {
-    if (!audioContext || !mixedDestination) return;
+function pickMimeType() {
+    if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) return 'audio/webm;codecs=opus';
+    if (MediaRecorder.isTypeSupported('audio/webm'))             return 'audio/webm';
+    return '';
+}
 
-    // Replace existing source for this id
-    if (audioSources[id]) {
-        try { audioSources[id].disconnect(); } catch (e) { /* ok */ }
-    }
+function attachTrackToRecorder(side, track) {
+    const slot = recorders[side];
+    if (!audioContext || !slot || !slot.destination) return;
+
+    // Replace any previous source for this side (e.g., Daily replaces a track)
+    disconnectSource(side);
 
     try {
         const stream = new MediaStream([track]);
         const source = audioContext.createMediaStreamSource(stream);
-        source.connect(mixedDestination);
-        audioSources[id] = source;
-        console.log(`Audio source added to mix: ${id}`);
+        source.connect(slot.destination);
+        slot.source = source;
+        console.log(`Audio attached: ${side}`);
 
-        // Start recording once we have at least one audio source
-        if (!isRecording) {
-            startRecording();
+        if (!slot.started) {
+            startRecorder(side);
         }
     } catch (err) {
-        console.error(`Failed to add audio source ${id}:`, err);
+        console.error(`Failed to attach ${side} audio:`, err);
     }
 }
 
-function removeTrackFromMix(id) {
-    if (!audioSources[id]) return;
-    try { audioSources[id].disconnect(); } catch (e) { /* ok */ }
-    delete audioSources[id];
-    console.log(`Audio source removed from mix: ${id}`);
+function disconnectSource(side) {
+    const slot = recorders[side];
+    if (slot?.source) {
+        try { slot.source.disconnect(); } catch (e) { /* ok */ }
+        slot.source = null;
+    }
 }
 
-function startRecording() {
-    if (isRecording || !mixedDestination) return;
+function startRecorder(side) {
+    const slot = recorders[side];
+    if (!slot || slot.started) return;
 
     try {
-        const stream = mixedDestination.stream;
-
-        // Pick the best supported MIME type
-        let mimeType = '';
-        if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-            mimeType = 'audio/webm;codecs=opus';
-        } else if (MediaRecorder.isTypeSupported('audio/webm')) {
-            mimeType = 'audio/webm';
-        }
-
+        const mimeType = pickMimeType();
         const options = mimeType ? { mimeType } : {};
-        audioRecorder = new MediaRecorder(stream, options);
-        audioChunks = [];
+        const recorder = new MediaRecorder(slot.destination.stream, options);
+        slot.recorder = recorder;
+        slot.chunks = [];
 
-        audioRecorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0) audioChunks.push(e.data);
+        recorder.ondataavailable = (e) => {
+            if (e.data && e.data.size > 0) slot.chunks.push(e.data);
         };
 
-        audioRecorder.start(1000); // 1-second chunks
-        isRecording = true;
-        console.log(`Recording started (${mimeType || 'browser default'})`);
+        recorder.start(1000);
+        slot.started = true;
+        console.log(`Recorder started: ${side} (${mimeType || 'browser default'})`);
     } catch (err) {
-        console.error('Failed to start recording:', err);
+        console.error(`Failed to start ${side} recorder:`, err);
     }
 }
 
-function stopRecording() {
-    if (!isRecording || !audioRecorder) return;
-
-    try {
-        if (audioRecorder.state !== 'inactive') {
-            audioRecorder.stop();
+function stopAllRecorders() {
+    for (const side of ['local', 'remote']) {
+        const slot = recorders[side];
+        if (!slot?.recorder) continue;
+        try {
+            if (slot.recorder.state !== 'inactive') slot.recorder.stop();
+        } catch (err) {
+            console.error(`Error stopping ${side} recorder:`, err);
         }
-    } catch (err) {
-        console.error('Error stopping recorder:', err);
+        slot.started = false;
+        disconnectSource(side);
     }
 
-    isRecording = false;
-
-    // Disconnect all sources
-    Object.keys(audioSources).forEach(id => {
-        try { audioSources[id].disconnect(); } catch (e) { /* ok */ }
-    });
-    audioSources = {};
-
-    // Close audio context
     if (audioContext && audioContext.state !== 'closed') {
         audioContext.close().catch(() => {});
         audioContext = null;
-        mixedDestination = null;
     }
+    console.log('All recorders stopped');
+}
 
-    console.log('Recording stopped');
+function getBlob(side) {
+    const chunks = recorders[side]?.chunks || [];
+    if (chunks.length === 0) return null;
+    return new Blob(chunks, { type: 'audio/webm' });
 }
 
 // ── Call Lifecycle ────────────────────────────────────────────
@@ -352,13 +355,20 @@ function handleCallCleanup() {
     console.log('Cleaning up call...');
 
     stopCallTimer();
-    stopRecording();
+    stopAllRecorders();
 
-    // Submit audio for transcription
-    if (audioChunks.length > 0) {
-        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-        submitTranscription(audioBlob);
-    }
+    // MediaRecorder.stop() flushes asynchronously — wait one tick so the
+    // final ondataavailable fires before we pull the blobs.
+    setTimeout(() => {
+        const localBlob  = getBlob('local');
+        const remoteBlob = getBlob('remote');
+        if (localBlob || remoteBlob) {
+            submitTranscription(localBlob, remoteBlob);
+        }
+        // Free chunk memory
+        recorders.local.chunks  = [];
+        recorders.remote.chunks = [];
+    }, 250);
 
     // Remove dynamically created remote audio elements
     document.querySelectorAll('audio[id^="remote-audio-"]').forEach(el => el.remove());
@@ -366,7 +376,6 @@ function handleCallCleanup() {
     // Reset state
     isCallActive = false;
     callObject = null;
-    audioChunks = [];
 
     // Reset UI
     if (localVideoEl)  localVideoEl.srcObject  = null;
@@ -377,9 +386,11 @@ function handleCallCleanup() {
 
 // ── Transcription Submission ──────────────────────────────────
 
-function submitTranscription(audioBlob) {
+function submitTranscription(localBlob, remoteBlob) {
     if (transcriptionInProgress) return;
-    if (!audioBlob || audioBlob.size === 0) return;
+    const localSize  = localBlob  ? localBlob.size  : 0;
+    const remoteSize = remoteBlob ? remoteBlob.size : 0;
+    if (localSize === 0 && remoteSize === 0) return;
     if (!appointmentId) {
         displayError('Appointment ID missing');
         return;
@@ -395,7 +406,10 @@ function submitTranscription(audioBlob) {
     if (loadingIndicatorEl) loadingIndicatorEl.classList.remove('hidden');
 
     const formData = new FormData();
-    formData.append('audio_data', audioBlob, 'recording.webm');
+    if (localBlob  && localSize  > 0) formData.append('local_audio',  localBlob,  'local.webm');
+    if (remoteBlob && remoteSize > 0) formData.append('remote_audio', remoteBlob, 'remote.webm');
+    formData.append('local_role', localRole || 'patient');
+    console.log(`Submitting audio: local=${localSize}B remote=${remoteSize}B role=${localRole}`);
 
     fetch(`/transcription/create/${appointmentId}/`, {
         method: 'POST',

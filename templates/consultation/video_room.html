@@ -43,6 +43,7 @@
     <input type="hidden" id="room-name" value="{{ room_name }}">
     <input type="hidden" id="room-token" value="{{ token }}">
     <input type="hidden" id="appointment-id" value="{{ appointment.id }}">
+    <input type="hidden" id="local-role" value="{% if is_doctor %}doctor{% else %}patient{% endif %}">
 
     <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
         <!-- Main Video Area -->

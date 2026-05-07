@@ -150,31 +150,42 @@ class PatientDashboardView(LoginRequiredMixin, PatientRequiredMixin, TemplateVie
                  .filter(patient=user)
                  .select_related('doctor', 'doctor__doctor_profile'))
 
+        # An appointment is considered "past" / "done" if any of:
+        #   * scheduled time has passed
+        #   * status is terminal (COMPLETED / CANCELLED / NO_SHOW)
+        #   * a Transcription exists for it (a call actually ended)
+        # This keeps the timeline accurate even when calls end before the
+        # scheduled slot, or are tested with future dates.
+        terminal_statuses = [
+            Appointment.Status.COMPLETED,
+            Appointment.Status.CANCELLED,
+            Appointment.Status.NO_SHOW,
+        ]
+        past_q = (
+            Q(appointment_date__lt=today)
+            | Q(appointment_date=today, appointment_time__lt=now.time())
+            | Q(status__in=terminal_statuses)
+            | Q(transcription__isnull=False)
+        )
+
         upcoming = (appts
-                    .filter(Q(appointment_date__gt=today) |
-                            Q(appointment_date=today, appointment_time__gte=now.time()))
-                    .exclude(status=Appointment.Status.CANCELLED)
+                    .exclude(past_q)
                     .order_by('appointment_date', 'appointment_time'))
 
         next_appt = upcoming.first()
 
-        # Past care: not just COMPLETED — anything that has happened (incl. CONFIRMED that are now in the past)
         past = (appts
-                .filter(Q(appointment_date__lt=today) |
-                        Q(appointment_date=today, appointment_time__lt=now.time()))
+                .filter(past_q)
                 .order_by('-appointment_date', '-appointment_time')
                 .prefetch_related('transcription', 'soap_note', 'follow_up', 'prescriptions')
+                .distinct()
                 [:20])
 
         # Aggregate counts in a single DB hit instead of two separate count() calls
         from django.db.models import Count
         agg = appts.aggregate(
-            upcoming_count=Count('id', filter=(
-                (Q(appointment_date__gt=today) |
-                 Q(appointment_date=today, appointment_time__gte=now.time()))
-                & ~Q(status=Appointment.Status.CANCELLED)
-            )),
-            completed_count=Count('id', filter=Q(status=Appointment.Status.COMPLETED)),
+            upcoming_count=Count('id', filter=~past_q, distinct=True),
+            completed_count=Count('id', filter=Q(status=Appointment.Status.COMPLETED), distinct=True),
         )
 
         context['next_appt'] = next_appt
@@ -215,26 +226,46 @@ class DoctorDashboardView(LoginRequiredMixin, DoctorRequiredMixin, TemplateView)
                  .filter(doctor=user)
                  .select_related('patient'))
 
+        # Show all of today's non-cancelled appointments in the queue (so the
+        # doctor sees the full day's roster, including already-done ones with
+        # COMPLETED status pill). Prefetch transcription so per-row "is done?"
+        # checks below don't N+1.
         today_appts = (appts
                        .filter(appointment_date=today)
                        .exclude(status=Appointment.Status.CANCELLED)
+                       .prefetch_related('transcription')
                        .order_by('appointment_time'))
 
-        # Now / Next
+        terminal_statuses = (
+            Appointment.Status.COMPLETED,
+            Appointment.Status.CANCELLED,
+            Appointment.Status.NO_SHOW,
+        )
+
+        def _is_done(appt):
+            """An appointment is done if status is terminal OR a Transcription exists."""
+            if appt.status in terminal_statuses:
+                return True
+            # hasattr safely catches RelatedObjectDoesNotExist for OneToOne reverse
+            return hasattr(appt, 'transcription')
+
+        # Now / Next — skip already-done appointments
         current_t = now.time()
         now_appt = next(
             (a for a in today_appts
              if a.status == Appointment.Status.CONFIRMED
-             and a.appointment_time <= current_t),
+             and a.appointment_time <= current_t
+             and not _is_done(a)),
             None,
         )
-        upcoming_today = [a for a in today_appts if a.appointment_time > current_t]
+        upcoming_today = [a for a in today_appts
+                          if a.appointment_time > current_t and not _is_done(a)]
         next_appt = upcoming_today[0] if upcoming_today else None
 
         if not next_appt:
             future = (appts
                       .filter(appointment_date__gt=today)
-                      .exclude(status=Appointment.Status.CANCELLED)
+                      .exclude(status__in=terminal_statuses)
                       .order_by('appointment_date', 'appointment_time')
                       .first())
             next_appt = future
@@ -309,9 +340,9 @@ class AdminDashboardView(LoginRequiredMixin, AdminRequiredMixin, TemplateView):
     template_name = 'admin/dashboard.html'
 
     def get_context_data(self, **kwargs):
-        from consultation_app.models import Appointment, Availability
+        from consultation_app.models import Appointment
         from payment_app.models import Payment
-        from transcription_app.models import Transcription, SOAPNote
+        from transcription_app.models import Transcription
 
         context = super().get_context_data(**kwargs)
         now = timezone.now()

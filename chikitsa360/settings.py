@@ -207,14 +207,11 @@ RAZORPAY_KEY_SECRET = os.environ.get('RAZORPAY_KEY_SECRET', '')
 RAZORPAY_ENABLED = False  # Set to True when you're ready for real payments
 
 # Daily.co settings
-# DAILY_API_KEY = env('DAILY_API_KEY')  # Retrieves the variable
 DAILY_API_KEY = os.environ.get('DAILY_API_KEY', '')
 
-# Deepgram settings
-DEEPGRAM_API_KEY = os.environ.get('DEEPGRAM_API_KEY', '')
-
-# OpenAI settings (for Whisper)
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', '')
+# Groq (used for both Whisper transcription AND SOAP-note LLM generation)
+GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
+GROQ_MODEL = os.environ.get('GROQ_MODEL', 'openai/gpt-oss-120b')
 INSTALLED_APPS += ['csp']
 
 MIDDLEWARE = ['csp.middleware.CSPMiddleware'] + MIDDLEWARE
@@ -223,35 +220,47 @@ CONTENT_SECURITY_POLICY = {
     'DIRECTIVES': {
         'default-src': ["'self'"],
         'style-src': [
-            "'self'", "'unsafe-inline'", '/static/', '/staticfiles/',
+            "'self'", "'unsafe-inline'",
             'https://fonts.googleapis.com',
             'https://cdn.tailwindcss.com',
             'https://cdnjs.cloudflare.com',
-            'https://use.fontawesome.com'
+            'https://use.fontawesome.com',
         ],
         'script-src': [
-            "'self'", "'unsafe-inline'", '/static/', '/staticfiles/',
+            "'self'", "'unsafe-inline'",
+            # 'unsafe-eval' is required by Daily.co's call-machine bundle
+            # (https://c.daily.co/.../call-machine-object-bundle.js uses eval()).
+            # Without this the WebRTC call cannot initialize.
+            "'unsafe-eval'",
             'https://cdn.tailwindcss.com',
             'https://cdnjs.cloudflare.com',
             'https://use.fontawesome.com',
             'https://unpkg.com',
-            'https://*.daily.co'
+            'https://*.daily.co',
+            'https://c.daily.co',
         ],
         'img-src': [
-            "'self'", 'data:', '/static/', '/staticfiles/',
+            "'self'", 'data:', 'blob:',
             'https://images.unsplash.com',
             'https://cdn.jsdelivr.net',
-            'https://*'
+            'https://*',
         ],
         'font-src': [
-            "'self'", '/static/', '/staticfiles/',
+            "'self'",
             'https://fonts.gstatic.com',
             'https://cdnjs.cloudflare.com',
-            'https://use.fontawesome.com'
+            'https://use.fontawesome.com',
         ],
-        'connect-src': ["'self'", 'https://*.daily.co'],
+        # 'ws:' / 'wss:' permit Channels WebSockets — CSP 'self' does NOT cover
+        # the ws:// or wss:// schemes even when same-origin.
+        'connect-src': [
+            "'self'",
+            'ws:', 'wss:',
+            'https://*.daily.co', 'wss://*.daily.co',
+        ],
         'frame-src': ["'self'", 'https://*.daily.co'],
-        'media-src': ["'self'", 'https://*.daily.co'],
+        'media-src': ["'self'", 'blob:', 'https://*.daily.co'],
+        'worker-src': ["'self'", 'blob:'],
     }
 }
 # Session settings

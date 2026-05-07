@@ -14,29 +14,42 @@ from .forms import SOAPNoteEditForm
 
 class TranscriptionCreateView(LoginRequiredMixin, View):
     """
-    View for creating a transcription from submitted audio data using Deepgram only.
+    Accepts per-speaker audio uploads (local_audio + remote_audio) and runs them
+    through Groq Whisper separately so each speaker can be labeled in the
+    merged transcript. Falls back to a single audio_data blob for safety.
     """
     def post(self, request, appointment_id):
         appointment = get_object_or_404(Appointment, id=appointment_id)
 
-        # Check permissions
         if request.user != appointment.doctor and request.user != appointment.patient:
             raise PermissionDenied("You don't have permission to transcribe this appointment.")
 
         try:
-            audio_data = request.FILES.get('audio_data')
+            local_file  = request.FILES.get('local_audio')
+            remote_file = request.FILES.get('remote_audio')
+            legacy_file = request.FILES.get('audio_data')  # backwards-compat
+            local_role  = (request.POST.get('local_role') or '').strip().lower()
 
-            if not audio_data:
+            if local_role not in ('doctor', 'patient'):
+                # Derive from the authenticated user as a fallback.
+                local_role = 'doctor' if request.user == appointment.doctor else 'patient'
+
+            local_bytes  = local_file.read()  if local_file  else None
+            remote_bytes = remote_file.read() if remote_file else None
+
+            if not local_bytes and not remote_bytes and legacy_file:
+                # Single-blob legacy path
+                local_bytes = legacy_file.read()
+
+            if not local_bytes and not remote_bytes:
                 return JsonResponse({'error': 'No audio data provided'}, status=400)
 
-            audio_bytes = audio_data.read()
-
-            transcription, created = Transcription.objects.get_or_create(
+            transcription, _created = Transcription.objects.get_or_create(
                 appointment=appointment,
                 defaults={'status': Transcription.Status.PENDING}
             )
 
-            # If already completed, don't re-process (second participant may also submit)
+            # The other participant may also submit audio — don't reprocess.
             if transcription.status == Transcription.Status.COMPLETED:
                 return JsonResponse({
                     'success': True,
@@ -50,11 +63,16 @@ class TranscriptionCreateView(LoginRequiredMixin, View):
                 transcription.save()
 
             try:
-                transcript = TranscriptionService.process_audio(audio_bytes, transcription)
+                TranscriptionService.process_dual_audio(
+                    local_audio=local_bytes,
+                    remote_audio=remote_bytes,
+                    transcription=transcription,
+                    local_role=local_role,
+                )
             except Exception as e:
                 return JsonResponse({
                     'success': False,
-                    'error': f"Transcription failed with Deepgram: {str(e)}"
+                    'error': f"Transcription failed: {str(e)}"
                 }, status=500)
 
             return JsonResponse({

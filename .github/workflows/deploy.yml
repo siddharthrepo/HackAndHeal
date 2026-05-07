@@ -78,8 +78,6 @@ jobs:
           RAZORPAY_KEY_SECRET=
 
           DAILY_API_KEY=${{ secrets.DAILY_API_KEY }}
-          DEEPGRAM_API_KEY=${{ secrets.DEEPGRAM_API_KEY }}
-          DEEPGRAM_MODEL=${{ secrets.DEEPGRAM_MODEL }}
           GROQ_API_KEY=${{ secrets.GROQ_API_KEY }}
           GROQ_MODEL=${{ secrets.GROQ_MODEL }}
 

@@ -6,8 +6,6 @@ python-dotenv
 razorpay
 requests
 psycopg2-binary
-deepgram-sdk
-openai
 pillow
 daphne
 django-environ

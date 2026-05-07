@@ -106,10 +106,21 @@ class Appointment(models.Model):
 
     @property
     def can_join(self):
-        """Check if it's time to join the appointment (any time on the appointment day)."""
-        if not self.is_today or self.status != self.Status.CONFIRMED:
+        """
+        Joinable when:
+          * status == CONFIRMED
+          * current time is between 15 min before and 2 hours after the scheduled slot
+
+        Cancelled / completed / past-by-2h appointments are not joinable.
+        """
+        if self.status != self.Status.CONFIRMED:
             return False
-        return True
+        now = timezone.now()
+        slot = timezone.make_aware(
+            timezone.datetime.combine(self.appointment_date, self.appointment_time)
+        )
+        from datetime import timedelta
+        return slot - timedelta(minutes=15) <= now <= slot + timedelta(hours=2)
 
 class Service(models.Model):
     """Model for healthcare services offered on the platform."""

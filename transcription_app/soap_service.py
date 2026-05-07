@@ -1,9 +1,12 @@
 import json
 import logging
 import threading
+import requests
 from django.conf import settings
 
 logger = logging.getLogger(__name__)
+
+GROQ_CHAT_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 SOAP_SYSTEM_PROMPT = """You are a medical documentation assistant. Given a consultation transcription between a doctor and patient, generate structured SOAP notes.
 
@@ -15,19 +18,21 @@ Return your response as a JSON object with exactly these 4 keys:
 
 If information for a section is not available in the transcription, write "Not discussed during this consultation."
 
-IMPORTANT: Return ONLY the JSON object, no markdown formatting, no code blocks, no extra text."""
+Return ONLY the JSON object."""
 
 
 class SOAPNoteService:
     @staticmethod
     def generate_soap_notes(transcription):
-        """Generate SOAP notes from a transcription using Groq LLM. Meant to run in a background thread."""
+        """Generate SOAP notes from a transcription. Meant to run in a background thread."""
         from .models import SOAPNote
+
+        soap_note = None
         try:
             soap_note, created = SOAPNote.objects.get_or_create(
                 appointment=transcription.appointment,
                 transcription=transcription,
-                defaults={'status': SOAPNote.Status.PENDING}
+                defaults={'status': SOAPNote.Status.PENDING},
             )
 
             if not created and soap_note.status == SOAPNote.Status.COMPLETED:
@@ -43,59 +48,77 @@ class SOAPNoteService:
                 soap_note.save()
                 return
 
-            from langchain_groq import ChatGroq
-            from langchain_core.messages import SystemMessage, HumanMessage
+            api_key = settings.GROQ_API_KEY
+            if not api_key:
+                raise ValueError("GROQ_API_KEY not configured")
 
-            llm = ChatGroq(
-                api_key=settings.GROQ_API_KEY,
-                model=settings.GROQ_MODEL,
-                temperature=0.3,
-                max_tokens=2000,
+            model = settings.GROQ_MODEL or 'openai/gpt-oss-120b'
+
+            body = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": SOAP_SYSTEM_PROMPT},
+                    {"role": "user",
+                     "content": f"Consultation Transcription:\n\n{transcription.content}"},
+                ],
+                "temperature": 0.3,
+                "max_tokens": 2000,
+                # Force valid JSON output — no markdown stripping needed.
+                "response_format": {"type": "json_object"},
+            }
+            headers = {
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            }
+
+            logger.info("Calling Groq chat for SOAP (model=%s, transcript=%d chars)",
+                        model, len(transcription.content))
+
+            response = requests.post(
+                GROQ_CHAT_URL,
+                headers=headers,
+                json=body,
+                timeout=60,
             )
 
-            messages = [
-                SystemMessage(content=SOAP_SYSTEM_PROMPT),
-                HumanMessage(content=f"Consultation Transcription:\n\n{transcription.content}"),
-            ]
+            if response.status_code != 200:
+                raise Exception(
+                    f"Groq chat error {response.status_code}: {response.text[:300]}"
+                )
 
-            response = llm.invoke(messages)
-            raw_text = response.content.strip()
+            payload = response.json()
+            content = payload["choices"][0]["message"]["content"]
+            data = json.loads(content)
 
-            # Handle markdown code block wrapping
-            if raw_text.startswith("```"):
-                lines = raw_text.split("\n")
-                # Remove first and last lines (```json and ```)
-                lines = [l for l in lines if not l.strip().startswith("```")]
-                raw_text = "\n".join(lines)
-
-            data = json.loads(raw_text)
-
-            soap_note.subjective = data.get("subjective", "")
-            soap_note.objective = data.get("objective", "")
-            soap_note.assessment = data.get("assessment", "")
-            soap_note.plan = data.get("plan", "")
+            soap_note.subjective = data.get("subjective", "") or ""
+            soap_note.objective = data.get("objective", "") or ""
+            soap_note.assessment = data.get("assessment", "") or ""
+            soap_note.plan = data.get("plan", "") or ""
             soap_note.status = SOAPNote.Status.COMPLETED
             soap_note.error_message = None
             soap_note.save()
 
-            logger.info(f"SOAP note generated successfully for appointment {transcription.appointment.id}")
+            logger.info("SOAP note generated for appointment %s",
+                        transcription.appointment.id)
 
         except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse SOAP note JSON: {e}")
-            try:
-                soap_note.status = SOAPNote.Status.FAILED
-                soap_note.error_message = f"Failed to parse AI response: {e}"
-                soap_note.save()
-            except Exception:
-                pass
+            logger.error("Failed to parse SOAP JSON: %s", e)
+            if soap_note is not None:
+                try:
+                    soap_note.status = SOAPNote.Status.FAILED
+                    soap_note.error_message = f"Failed to parse AI response: {e}"
+                    soap_note.save()
+                except Exception:
+                    pass
         except Exception as e:
             logger.exception("SOAP note generation failed")
-            try:
-                soap_note.status = SOAPNote.Status.FAILED
-                soap_note.error_message = str(e)
-                soap_note.save()
-            except Exception:
-                pass
+            if soap_note is not None:
+                try:
+                    soap_note.status = SOAPNote.Status.FAILED
+                    soap_note.error_message = str(e)[:500]
+                    soap_note.save()
+                except Exception:
+                    pass
         finally:
             from django.db import connection
             connection.close()
